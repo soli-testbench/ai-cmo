@@ -1,0 +1,19 @@
+{
+  "name": "chief-mog-officer",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.8",
+    "turbo": "^2.8.0",
+    "typescript": "~5.7.0"
+  }
+}

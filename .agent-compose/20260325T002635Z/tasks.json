@@ -302,7 +302,7 @@
             "Create apps/web/src/main.tsx entry point rendering App",
             "Verify vite dev server starts without errors"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w2",
@@ -314,7 +314,7 @@
             "Set base styles: dark background, light text, sharp corners default",
             "Verify Tailwind classes render correctly in browser"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w3",
@@ -325,7 +325,7 @@
             "Customize component styles to match Command Dark palette",
             "Verify components render with dark theme"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w4",
@@ -338,7 +338,7 @@
             "Highlight active route in sidebar",
             "Verify layout renders correctly at various viewport sizes"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w5",
@@ -350,7 +350,7 @@
             "Add route: /opportunities → Opportunities page",
             "Verify navigation between pages works without full reload"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w6",
@@ -362,7 +362,7 @@
             "Add quick action buttons (Run Analysis, View Opportunities, Create Project)",
             "Apply Command Dark styling consistently"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w7",
@@ -374,7 +374,7 @@
             "Submit button shows toast or alert (non-functional placeholder)",
             "Form validates required fields client-side"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w8",
@@ -386,7 +386,7 @@
             "Status column uses colored badges (green=new, blue=reviewed, amber=acted, grey=dismissed)",
             "Score column shows visual indicator or colored number"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w9",
@@ -397,7 +397,7 @@
             "Create packages/ui/package.json as minimal placeholder",
             "Verify imports from @chief-mog/types work in the frontend"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "w10",
@@ -410,7 +410,7 @@
             "Run typecheck and verify no TypeScript errors",
             "Run biome lint and verify no lint errors"
           ],
-          "passes": false
+          "passes": true
         }
       ],
       "quality_checklist": [
@@ -418,25 +418,25 @@
           "id": "wq1",
           "description": "Design is consistently 'Command Dark' — no default white backgrounds, no generic rounded components",
           "steps": ["Visually inspect all pages for white backgrounds or generic styling", "Verify all cards use bg-secondary with border-default borders", "Check that accent colors are used intentionally, not decoratively"],
-          "passes": false
+          "passes": true
         },
         {
           "id": "wq2",
           "description": "No hardcoded strings in components — mock data is centralized",
           "steps": ["Check that mock data is defined in api-client or a constants file, not inline in JSX", "Verify types from @chief-mog/types are used for mock data shape"],
-          "passes": false
+          "passes": true
         },
         {
           "id": "wq3",
           "description": "Responsive layout works at standard breakpoints",
           "steps": ["Check sidebar collapses or hides on mobile widths", "Verify grid layouts stack appropriately on narrow screens"],
-          "passes": false
+          "passes": true
         },
         {
           "id": "wq4",
           "description": "No unused imports, components, or CSS",
           "steps": ["Run biome lint to catch unused imports", "Check for defined-but-unused components or functions"],
-          "passes": false
+          "passes": true
         }
       ]
     }
