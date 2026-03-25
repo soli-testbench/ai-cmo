@@ -1,8 +1,40 @@
+import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 
 interface RateLimitEntry {
 	count: number;
 	resetAt: number;
+}
+
+/**
+ * Resolve the client IP address for rate-limiting.
+ *
+ * Security: proxy headers (X-Forwarded-For, X-Real-IP) are trivially spoofable.
+ * They are only used when TRUST_PROXY is explicitly enabled, which should only be
+ * set when the app runs behind a trusted reverse proxy that sanitises these headers.
+ *
+ * When TRUST_PROXY is not set, we use the socket remote address directly
+ * (available via @hono/node-server's `env.incoming`), falling back to "unknown".
+ */
+function resolveClientIp(c: Context): string {
+	const trustProxy = process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1";
+
+	if (trustProxy) {
+		const forwarded = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+		if (forwarded) return forwarded;
+
+		const realIp = c.req.header("x-real-ip");
+		if (realIp) return realIp;
+	}
+
+	// For @hono/node-server, the raw Node IncomingMessage is on c.env.incoming
+	// biome-ignore lint/suspicious/noExplicitAny: node-server env typing varies
+	const incoming = (c.env as any)?.incoming;
+	if (incoming?.socket?.remoteAddress) {
+		return incoming.socket.remoteAddress;
+	}
+
+	return "unknown";
 }
 
 /**
@@ -34,10 +66,7 @@ export function rateLimiter({ windowMs = 60_000, maxRequests = 100 } = {}) {
 	}
 
 	return createMiddleware(async (c, next) => {
-		const ip =
-			c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-			c.req.header("x-real-ip") ||
-			"unknown";
+		const ip = resolveClientIp(c);
 
 		const now = Date.now();
 		let entry = store.get(ip);
