@@ -1,0 +1,29 @@
+{
+  "name": "chief-mog-officer",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "biome format --write .",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "db:migrate": "npm run db:migrate --workspace=@chief-mog/db",
+    "db:seed": "npm run db:seed --workspace=@chief-mog/db",
+    "db:generate": "npm run db:generate --workspace=@chief-mog/db"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.8",
+    "@types/node": "^25.5.0",
+    "turbo": "2.8.20",
+    "tsx": "^4.21.0",
+    "typescript": "~5.7.0",
+    "vitest": "4.1.1"
+  }
+}

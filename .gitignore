@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.turbo/
+coverage/
+.DS_Store
+# Agent operational artifacts — exclude entire directory from source control
+.agent-compose/
