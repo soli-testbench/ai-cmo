@@ -10,3 +10,8 @@
   - docker-compose.yml validated
   - Drizzle migration generated (10 tables)
   - Seed script ready (depends on running PostgreSQL)
+
+## simplifier — 2026-03-25T00:52:00Z
+- **Summary**: Used existing `sleep()` in `retry()` instead of duplicating `new Promise(resolve => setTimeout(resolve, delay))` inline (packages/lib/src/utils.ts)
+- **Tests run**: yes — 33 tests passing (15 types, 13 lib, 5 config), 9/9 typecheck pass
+- **Outcome**: success
