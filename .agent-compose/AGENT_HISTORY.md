@@ -1,3 +1,11 @@
+## security-fixer — 2026-03-25T01:39:00Z
+
+- **Feedback**: Security review flagged out-of-scope operational artifacts, placeholder auth allowing any token, hardcoded bearer token in frontend, unrestricted CORS, missing rate limiting, and default docker credentials.
+- **Actions taken**: Removed init.sh, tasks.json (operational artifacts); hardened auth middleware to reject malformed/placeholder tokens; replaced hardcoded Bearer placeholder with env-var-based auth in frontend; made CORS origin configurable via CORS_ORIGIN env var; added rate limiting TODO; parameterized docker-compose credentials with env var defaults and safety comment.
+- **Files changed**: .agent-compose/20260325T002635Z/init.sh (deleted), .agent-compose/20260325T002635Z/tasks.json (deleted), tasks.json (deleted), apps/api/src/middleware/auth.ts, apps/api/src/app.ts, apps/web/src/lib/api-client.ts, docker-compose.yml
+- **Tests run**: yes — 85 tests passing (config: 5, types: 15, lib: 13, agents: 27, web: 12, api: 9, worker: 4)
+- **Outcome**: success
+
 ## implementer/foundation — 2026-03-25T00:49:00Z
 - **Items completed**: f1, f2, f3, f4, f5, f6, f7, f8, f9, fq1, fq2, fq3, fq4
 - **Tests run**: yes — 33 tests passing (15 types, 13 lib, 5 config)
