@@ -30,3 +30,17 @@ export class UnauthorizedError extends AppError {
     this.name = "UnauthorizedError";
   }
 }
+
+/** Handles cross-module instanceof failures in monorepos by duck-typing */
+export function isAppError(err: unknown): err is AppError {
+  if (err instanceof AppError) return true;
+  return (
+    err !== null &&
+    typeof err === "object" &&
+    "code" in err &&
+    "statusCode" in err &&
+    "message" in err &&
+    typeof (err as AppError).code === "string" &&
+    typeof (err as AppError).statusCode === "number"
+  );
+}

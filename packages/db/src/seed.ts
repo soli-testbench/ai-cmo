@@ -121,7 +121,6 @@ async function seed() {
     },
   ]);
 
-  const runIds: string[] = [];
   const runs = await db
     .insert(agentRuns)
     .values([
@@ -144,9 +143,7 @@ async function seed() {
     ])
     .returning();
 
-  for (const run of runs) {
-    runIds.push(run.id);
-  }
+  const runIds = runs.map((run) => run.id);
 
   await db.insert(dailyDigests).values({
     projectId: project.id,

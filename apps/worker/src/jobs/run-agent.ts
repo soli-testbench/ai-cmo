@@ -1,4 +1,4 @@
-import { getAllAgents, getAgent } from "@chief-mog/agents";
+import { getAgent } from "@chief-mog/agents";
 import type { AgentContext } from "@chief-mog/agents";
 import { generateId, logger } from "@chief-mog/lib";
 
