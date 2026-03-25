@@ -187,6 +187,38 @@ docker run -p 3001:3001 \
 └── package.json         # Root workspace config
 ```
 
+## Security & Auth Model
+
+### Authentication
+
+The API uses **JWT (HS256)** for authentication. Tokens are verified on every request to `/api/*` routes.
+
+| Environment | JWT_SECRET behavior |
+|---|---|
+| **production** | `JWT_SECRET` env var is **required** — the API refuses to start without it. |
+| **development / test** | If `JWT_SECRET` is not set, a random per-instance secret is generated at startup. This means tokens are not portable across restarts, which is intentional. |
+
+**For production deployments:**
+- Set `JWT_SECRET` to a strong, randomly generated value (minimum 32 bytes / 256 bits).
+- Set `JWT_ISSUER` and `JWT_AUDIENCE` to restrict token scope.
+- Set `CORS_ORIGIN` to the exact frontend origin (e.g., `https://app.example.com`). Wildcard (`*`) is rejected in production.
+
+### Database credentials
+
+The `docker-compose.yml` ships with default Postgres credentials (`postgres:postgres`) for local development only. The config validation layer (`packages/config`) rejects these defaults when `NODE_ENV=production`.
+
+### Frontend auth
+
+The web frontend authenticates via **httpOnly session cookies** set by the backend. No bearer tokens or API keys are embedded in the frontend build. The `credentials: "include"` fetch option ensures cookies are sent with every API request.
+
+### Deployment checklist
+
+1. Set `NODE_ENV=production`
+2. Set a strong `JWT_SECRET` (generate with `openssl rand -hex 32`)
+3. Set `DATABASE_URL` with strong, unique credentials
+4. Set `CORS_ORIGIN` to the production frontend URL
+5. Ensure `.env` files are never committed (verified by `.gitignore`)
+
 ## Troubleshooting
 
 **Port conflicts**: If ports 5432, 6379, 3000, or 3001 are already in use, either stop the conflicting service or update the ports in `docker-compose.yml` and `.env`.

@@ -2,21 +2,26 @@ import type { InsertProject, Opportunity, Project } from "@chief-mog/types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-// TODO(security): Implement proper auth flow (e.g. login → JWT → stored token)
+/**
+ * Session-based API request helper.
+ *
+ * Authentication uses httpOnly cookies set by the backend login endpoint.
+ * The frontend never handles raw tokens — `credentials: "include"` ensures
+ * cookies are sent with every request, and the backend validates the session.
+ *
+ * For local development without a running backend, requests fall through to
+ * mock data (see individual api methods below).
+ */
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options?.headers as Record<string, string>) ?? {}),
   };
 
-  const token = import.meta.env.VITE_API_TOKEN;
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+    credentials: "include",
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);

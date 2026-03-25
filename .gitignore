@@ -1,11 +1,11 @@
 node_modules/
 dist/
 .env
-.env.local
+.env.*
+!.env.example
 *.tsbuildinfo
 .turbo/
 coverage/
 .DS_Store
-# Agent operational artifacts (run dirs, pointer files)
-.agent-compose/*/
-.agent-compose/current
+# Agent operational artifacts — exclude entire directory from source control
+.agent-compose/

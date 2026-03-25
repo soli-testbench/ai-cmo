@@ -1,19 +1,18 @@
+import { randomBytes } from "node:crypto";
 import { UnauthorizedError } from "@chief-mog/lib";
 import { createMiddleware } from "hono/factory";
-import { decode, verify } from "hono/jwt";
+import { verify } from "hono/jwt";
 
 /**
  * JWT authentication middleware.
  *
  * Required env vars:
  *   JWT_SECRET — HMAC secret used to verify token signatures (HS256).
+ *               Must be set in ALL environments. There is no fallback.
  *
  * Optional env vars:
  *   JWT_ISSUER   — expected `iss` claim (rejected if present in token but mismatched).
  *   JWT_AUDIENCE — expected `aud` claim (rejected if present in token but mismatched).
- *
- * In development (NODE_ENV=development), a missing JWT_SECRET falls back to
- * "dev-only-secret" so the local dev loop works without extra setup.
  */
 export const authMiddleware = createMiddleware(async (c, next) => {
 	const authHeader = c.req.header("Authorization");
@@ -63,13 +62,27 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 	await next();
 });
 
+/**
+ * Per-instance random secret generated at startup for dev/test when JWT_SECRET
+ * is not explicitly provided. Not predictable across instances.
+ */
+let _devSecret: string | undefined;
+
 function getJwtSecret(): string {
 	const secret = process.env.JWT_SECRET;
 	if (secret) return secret;
 
 	if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
-		return "dev-only-secret";
+		if (!_devSecret) {
+			_devSecret = randomBytes(32).toString("hex");
+		}
+		return _devSecret;
 	}
 
 	throw new Error("JWT_SECRET environment variable is required in non-development environments");
+}
+
+/** Exposed for test use only — returns the active JWT secret. */
+export function getActiveJwtSecret(): string {
+	return getJwtSecret();
 }

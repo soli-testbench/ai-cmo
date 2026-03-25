@@ -1,16 +1,16 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { sign } from "hono/jwt";
 import { app } from "../src/app.js";
+import { getActiveJwtSecret } from "../src/middleware/auth.js";
 
-// The auth middleware falls back to "dev-only-secret" in test/development
-const JWT_SECRET = "dev-only-secret";
 let validToken: string;
 
 beforeAll(async () => {
 	process.env.NODE_ENV = "test";
+	const secret = getActiveJwtSecret();
 	validToken = await sign(
 		{ sub: "test-user", iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 },
-		JWT_SECRET,
+		secret,
 		"HS256",
 	);
 });
@@ -44,9 +44,10 @@ describe("Auth", () => {
 	});
 
 	it("rejects expired JWT tokens", async () => {
+		const secret = getActiveJwtSecret();
 		const expiredToken = await sign(
 			{ sub: "test-user", iat: Math.floor(Date.now() / 1000) - 7200, exp: Math.floor(Date.now() / 1000) - 3600 },
-			JWT_SECRET,
+			secret,
 			"HS256",
 		);
 		const res = await app.request("/api/projects", {
