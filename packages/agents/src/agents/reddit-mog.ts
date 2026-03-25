@@ -1,19 +1,24 @@
-import type { Opportunity } from "@chief-mog/types";
 import { generateId } from "@chief-mog/lib";
+import type { Opportunity } from "@chief-mog/types";
 import type { Agent, AgentContext, AnalysisResult, IngestResult } from "../interface.js";
 import { registerAgent } from "../registry.js";
 
 class RedditMogAgent implements Agent {
   id = "reddit-mog";
   name = "Reddit MOG";
-  description = "Monitors Reddit discussions to identify brand mentions, sentiment trends, and community-driven opportunities.";
+  description =
+    "Monitors Reddit discussions to identify brand mentions, sentiment trends, and community-driven opportunities.";
 
   async ingest(context: AgentContext): Promise<IngestResult> {
     return {
       agentId: this.id,
       data: {
         subreddits: [
-          { name: `r/${context.companyProfile.industry.toLowerCase()}`, subscribers: 245000, relevantPosts: 12 },
+          {
+            name: `r/${context.companyProfile.industry.toLowerCase()}`,
+            subscribers: 245000,
+            relevantPosts: 12,
+          },
           { name: "r/startups", subscribers: 890000, relevantPosts: 5 },
         ],
         mentions: {
@@ -31,7 +36,7 @@ class RedditMogAgent implements Agent {
     };
   }
 
-  async analyze(context: AgentContext, data: IngestResult): Promise<AnalysisResult> {
+  async analyze(context: AgentContext, _data: IngestResult): Promise<AnalysisResult> {
     return {
       agentId: this.id,
       insights: [
@@ -47,7 +52,10 @@ class RedditMogAgent implements Agent {
     };
   }
 
-  async generateOpportunities(context: AgentContext, analysis: AnalysisResult): Promise<Opportunity[]> {
+  async generateOpportunities(
+    context: AgentContext,
+    _analysis: AnalysisResult,
+  ): Promise<Opportunity[]> {
     return [
       {
         id: generateId(),

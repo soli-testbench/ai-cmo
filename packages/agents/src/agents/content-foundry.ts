@@ -1,12 +1,13 @@
-import type { Opportunity } from "@chief-mog/types";
 import { generateId } from "@chief-mog/lib";
+import type { Opportunity } from "@chief-mog/types";
 import type { Agent, AgentContext, AnalysisResult, IngestResult } from "../interface.js";
 import { registerAgent } from "../registry.js";
 
 class ContentFoundryAgent implements Agent {
   id = "content-foundry";
   name = "Content Foundry";
-  description = "Identifies content gaps and opportunities by analyzing existing content performance and market demand.";
+  description =
+    "Identifies content gaps and opportunities by analyzing existing content performance and market demand.";
 
   async ingest(context: AgentContext): Promise<IngestResult> {
     return {
@@ -19,7 +20,11 @@ class ContentFoundryAgent implements Agent {
           avgEngagement: 0.034,
         },
         contentGaps: [
-          { topic: `${context.companyProfile.industry} best practices`, demand: "high", competition: "medium" },
+          {
+            topic: `${context.companyProfile.industry} best practices`,
+            demand: "high",
+            competition: "medium",
+          },
           { topic: "ROI calculator", demand: "medium", competition: "low" },
           { topic: "Integration guides", demand: "high", competition: "high" },
         ],
@@ -32,7 +37,7 @@ class ContentFoundryAgent implements Agent {
     };
   }
 
-  async analyze(context: AgentContext, data: IngestResult): Promise<AnalysisResult> {
+  async analyze(context: AgentContext, _data: IngestResult): Promise<AnalysisResult> {
     return {
       agentId: this.id,
       insights: [
@@ -49,7 +54,10 @@ class ContentFoundryAgent implements Agent {
     };
   }
 
-  async generateOpportunities(context: AgentContext, analysis: AnalysisResult): Promise<Opportunity[]> {
+  async generateOpportunities(
+    context: AgentContext,
+    _analysis: AnalysisResult,
+  ): Promise<Opportunity[]> {
     return [
       {
         id: generateId(),

@@ -1,5 +1,5 @@
-import { createMiddleware } from "hono/factory";
 import { UnauthorizedError } from "@chief-mog/lib";
+import { createMiddleware } from "hono/factory";
 
 export const authMiddleware = createMiddleware(async (c, next) => {
   const authHeader = c.req.header("Authorization");

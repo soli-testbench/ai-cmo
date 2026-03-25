@@ -10,8 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { mockOpportunities } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 const agentLabels: Record<string, string> = {
   "search-mog": "SearchMog",
@@ -28,8 +28,8 @@ function scoreColor(score: number): string {
   return "text-accent-red";
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -72,9 +72,7 @@ export function Opportunities() {
                 <TableRow key={opp.id}>
                   <TableCell className="max-w-[300px]">
                     <p className="font-medium text-sm truncate">{opp.title}</p>
-                    <p className="text-xs text-text-tertiary truncate mt-0.5">
-                      {opp.description}
-                    </p>
+                    <p className="text-xs text-text-tertiary truncate mt-0.5">{opp.description}</p>
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-xs text-accent-purple">
@@ -87,12 +85,7 @@ export function Opportunities() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={cn(
-                        "font-mono text-sm font-semibold",
-                        scoreColor(opp.score),
-                      )}
-                    >
+                    <span className={cn("font-mono text-sm font-semibold", scoreColor(opp.score))}>
                       {opp.score}
                     </span>
                   </TableCell>

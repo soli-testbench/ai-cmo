@@ -1,10 +1,4 @@
-import {
-  Bot,
-  FolderOpen,
-  LayoutDashboard,
-  Lightbulb,
-  Settings,
-} from "lucide-react";
+import { Bot, FolderOpen, LayoutDashboard, Lightbulb, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +24,7 @@ export function Sidebar() {
       <nav className="flex-1 py-2 px-2">
         {navItems.map((item) => {
           const isActive =
-            item.path === "/"
-              ? location.pathname === "/"
-              : location.pathname.startsWith(item.path);
+            item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
           return (
             <Link
               key={item.path}
@@ -52,9 +44,7 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-border-default">
-        <p className="text-xs text-text-tertiary font-mono">
-          Chief MOG Officer v0.1.0
-        </p>
+        <p className="text-xs text-text-tertiary font-mono">Chief MOG Officer v0.1.0</p>
       </div>
     </aside>
   );

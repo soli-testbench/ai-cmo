@@ -1,6 +1,6 @@
+import { generateId, NotFoundError } from "@chief-mog/lib";
 import { Hono } from "hono";
 import { z } from "zod";
-import { generateId, NotFoundError } from "@chief-mog/lib";
 
 const createProjectSchema = z.object({
   name: z.string().min(1),

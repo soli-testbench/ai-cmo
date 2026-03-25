@@ -1,5 +1,5 @@
-import { Queue } from "bullmq";
 import { logger } from "@chief-mog/lib";
+import { Queue } from "bullmq";
 import { createRedisConnection } from "../lib/redis.js";
 
 export function setupScheduledJobs(): Queue {
@@ -8,12 +8,16 @@ export function setupScheduledJobs(): Queue {
   const scheduledQueue = new Queue("scheduled-daily", { connection });
 
   scheduledQueue
-    .upsertJobScheduler("daily-analysis", {
-      pattern: "0 6 * * *",
-    }, {
-      name: "daily-analysis",
-      data: {},
-    })
+    .upsertJobScheduler(
+      "daily-analysis",
+      {
+        pattern: "0 6 * * *",
+      },
+      {
+        name: "daily-analysis",
+        data: {},
+      },
+    )
     .then(() => {
       logger.info("Scheduled daily analysis job (6:00 UTC)");
     })

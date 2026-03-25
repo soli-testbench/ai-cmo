@@ -1,4 +1,9 @@
-import type { CompanyProfile, CompetitorProfile, NarrativeModel, Opportunity } from "@chief-mog/types";
+import type {
+  CompanyProfile,
+  CompetitorProfile,
+  NarrativeModel,
+  Opportunity,
+} from "@chief-mog/types";
 
 export interface AgentContext {
   projectId: string;

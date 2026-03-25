@@ -24,9 +24,7 @@ export function App() {
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <div>
-      <h1 className="text-xl font-display font-semibold text-text-primary mb-2">
-        {title}
-      </h1>
+      <h1 className="text-xl font-display font-semibold text-text-primary mb-2">{title}</h1>
       <p className="text-sm text-text-secondary">This page is coming soon.</p>
     </div>
   );

@@ -67,9 +67,7 @@ describe("Opportunities", () => {
     expect(
       screen.getByText("Rising search interest in 'AI workflow automation'"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Competitor launched new pricing tier"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Competitor launched new pricing tier")).toBeInTheDocument();
   });
 
   it("renders status badges", () => {

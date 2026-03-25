@@ -1,7 +1,7 @@
 import { getAllAgents } from "@chief-mog/agents";
 import { logger } from "@chief-mog/lib";
-import { runAgent } from "./run-agent.js";
 import type { RunAgentResult } from "./run-agent.js";
+import { runAgent } from "./run-agent.js";
 
 export interface RunAnalysisInput {
   projectId: string;
@@ -16,9 +16,7 @@ export interface RunAnalysisResult {
 
 export async function runAnalysis(input: RunAnalysisInput): Promise<RunAnalysisResult> {
   const { projectId, agentId } = input;
-  const agents = agentId
-    ? [{ id: agentId }]
-    : getAllAgents().map((a) => ({ id: a.id }));
+  const agents = agentId ? [{ id: agentId }] : getAllAgents().map((a) => ({ id: a.id }));
 
   logger.info(`Starting analysis for project ${projectId}`, {
     agentCount: agents.length,

@@ -26,8 +26,8 @@ const mockProjects: Project[] = [
     companyProfileId: "550e8400-e29b-41d4-a716-446655440010",
     userId: "550e8400-e29b-41d4-a716-446655440000",
     status: "active",
-    createdAt: "2025-01-15T10:00:00.000Z",
-    updatedAt: "2025-03-20T14:30:00.000Z",
+    createdAt: new Date("2025-01-15T10:00:00.000Z"),
+    updatedAt: new Date("2025-03-20T14:30:00.000Z"),
   },
 ];
 
@@ -43,8 +43,8 @@ const mockOpportunities: Opportunity[] = [
     score: 87,
     metadata: {},
     status: "new",
-    createdAt: "2025-03-20T08:00:00.000Z",
-    updatedAt: "2025-03-20T08:00:00.000Z",
+    createdAt: new Date("2025-03-20T08:00:00.000Z"),
+    updatedAt: new Date("2025-03-20T08:00:00.000Z"),
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440102",
@@ -57,8 +57,8 @@ const mockOpportunities: Opportunity[] = [
     score: 92,
     metadata: {},
     status: "reviewed",
-    createdAt: "2025-03-19T14:00:00.000Z",
-    updatedAt: "2025-03-20T09:00:00.000Z",
+    createdAt: new Date("2025-03-19T14:00:00.000Z"),
+    updatedAt: new Date("2025-03-20T09:00:00.000Z"),
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440103",
@@ -67,12 +67,12 @@ const mockOpportunities: Opportunity[] = [
     type: "reddit",
     title: "Viral Reddit thread comparing AI tools",
     description:
-      'A thread on r/artificial with 2.3k upvotes is comparing AI productivity tools. Acme is mentioned but not favorably.',
+      "A thread on r/artificial with 2.3k upvotes is comparing AI productivity tools. Acme is mentioned but not favorably.",
     score: 74,
     metadata: {},
     status: "new",
-    createdAt: "2025-03-18T16:00:00.000Z",
-    updatedAt: "2025-03-18T16:00:00.000Z",
+    createdAt: new Date("2025-03-18T16:00:00.000Z"),
+    updatedAt: new Date("2025-03-18T16:00:00.000Z"),
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440104",
@@ -85,8 +85,8 @@ const mockOpportunities: Opportunity[] = [
     score: 68,
     metadata: {},
     status: "acted",
-    createdAt: "2025-03-17T10:00:00.000Z",
-    updatedAt: "2025-03-19T11:00:00.000Z",
+    createdAt: new Date("2025-03-17T10:00:00.000Z"),
+    updatedAt: new Date("2025-03-19T11:00:00.000Z"),
   },
   {
     id: "550e8400-e29b-41d4-a716-446655440105",
@@ -99,8 +99,8 @@ const mockOpportunities: Opportunity[] = [
     score: 81,
     metadata: {},
     status: "dismissed",
-    createdAt: "2025-03-16T12:00:00.000Z",
-    updatedAt: "2025-03-18T09:00:00.000Z",
+    createdAt: new Date("2025-03-16T12:00:00.000Z"),
+    updatedAt: new Date("2025-03-18T09:00:00.000Z"),
   },
 ];
 
@@ -123,25 +123,21 @@ export const api = {
       return {
         ...data,
         id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
     }
   },
 
   async getOpportunities(projectId: string): Promise<Opportunity[]> {
     try {
-      return await request<Opportunity[]>(
-        `/api/projects/${projectId}/opportunities`,
-      );
+      return await request<Opportunity[]>(`/api/projects/${projectId}/opportunities`);
     } catch {
       return mockOpportunities.filter((o) => o.projectId === projectId);
     }
   },
 
-  async triggerAnalysis(
-    projectId: string,
-  ): Promise<{ jobId: string; status: string }> {
+  async triggerAnalysis(projectId: string): Promise<{ jobId: string; status: string }> {
     try {
       return await request<{ jobId: string; status: string }>(
         `/api/projects/${projectId}/analyze`,
@@ -153,4 +149,4 @@ export const api = {
   },
 };
 
-export { mockProjects, mockOpportunities };
+export { mockOpportunities, mockProjects };

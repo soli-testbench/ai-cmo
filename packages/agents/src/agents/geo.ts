@@ -1,14 +1,15 @@
-import type { Opportunity } from "@chief-mog/types";
 import { generateId } from "@chief-mog/lib";
+import type { Opportunity } from "@chief-mog/types";
 import type { Agent, AgentContext, AnalysisResult, IngestResult } from "../interface.js";
 import { registerAgent } from "../registry.js";
 
 class GeoAgent implements Agent {
   id = "geo";
   name = "Geo Agent";
-  description = "Analyzes geographic market data to identify underserved regions and local market opportunities.";
+  description =
+    "Analyzes geographic market data to identify underserved regions and local market opportunities.";
 
-  async ingest(context: AgentContext): Promise<IngestResult> {
+  async ingest(_context: AgentContext): Promise<IngestResult> {
     return {
       agentId: this.id,
       data: {
@@ -31,7 +32,7 @@ class GeoAgent implements Agent {
     };
   }
 
-  async analyze(context: AgentContext, data: IngestResult): Promise<AnalysisResult> {
+  async analyze(context: AgentContext, _data: IngestResult): Promise<AnalysisResult> {
     return {
       agentId: this.id,
       insights: [
@@ -47,7 +48,10 @@ class GeoAgent implements Agent {
     };
   }
 
-  async generateOpportunities(context: AgentContext, analysis: AnalysisResult): Promise<Opportunity[]> {
+  async generateOpportunities(
+    context: AgentContext,
+    _analysis: AnalysisResult,
+  ): Promise<Opportunity[]> {
     return [
       {
         id: generateId(),

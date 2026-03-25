@@ -1,9 +1,9 @@
 import { Activity, BarChart3, Play, Plus, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const metrics = [
   { label: "Opportunities", value: "24", change: "+5 today", icon: Zap },
@@ -96,18 +96,12 @@ export function CommandCenter() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-accent-purple">
-                          {item.agent}
-                        </span>
+                        <span className="font-mono text-xs text-accent-purple">{item.agent}</span>
                         <StatusBadge status={item.status} />
                       </div>
-                      <p className="text-sm text-text-secondary mt-0.5 truncate">
-                        {item.action}
-                      </p>
+                      <p className="text-sm text-text-secondary mt-0.5 truncate">{item.action}</p>
                     </div>
-                    <span className="text-xs text-text-tertiary ml-4 shrink-0">
-                      {item.time}
-                    </span>
+                    <span className="text-xs text-text-tertiary ml-4 shrink-0">{item.time}</span>
                   </div>
                 ))}
               </div>
@@ -128,21 +122,13 @@ export function CommandCenter() {
                   Run Analysis
                 </Button>
                 <Link to="/opportunities" className="block">
-                  <Button
-                    className="w-full justify-start"
-                    variant="secondary"
-                    size="sm"
-                  >
+                  <Button className="w-full justify-start" variant="secondary" size="sm">
                     <Zap className="h-3.5 w-3.5" />
                     View Opportunities
                   </Button>
                 </Link>
                 <Link to="/projects/new" className="block">
-                  <Button
-                    className="w-full justify-start"
-                    variant="secondary"
-                    size="sm"
-                  >
+                  <Button className="w-full justify-start" variant="secondary" size="sm">
                     <Plus className="h-3.5 w-3.5" />
                     Create Project
                   </Button>

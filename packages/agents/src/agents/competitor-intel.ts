@@ -1,12 +1,13 @@
-import type { Opportunity } from "@chief-mog/types";
 import { generateId } from "@chief-mog/lib";
+import type { Opportunity } from "@chief-mog/types";
 import type { Agent, AgentContext, AnalysisResult, IngestResult } from "../interface.js";
 import { registerAgent } from "../registry.js";
 
 class CompetitorIntelAgent implements Agent {
   id = "competitor-intel";
   name = "Competitor Intel";
-  description = "Tracks competitor activities, pricing changes, product launches, and strategic movements to identify competitive advantages.";
+  description =
+    "Tracks competitor activities, pricing changes, product launches, and strategic movements to identify competitive advantages.";
 
   async ingest(context: AgentContext): Promise<IngestResult> {
     return {
@@ -18,7 +19,11 @@ class CompetitorIntelAgent implements Agent {
           trafficTrend: "declining",
         })),
         pricingChanges: [
-          { competitor: "Competitor A", change: "Increased enterprise tier by 15%", date: "2026-03-15" },
+          {
+            competitor: "Competitor A",
+            change: "Increased enterprise tier by 15%",
+            date: "2026-03-15",
+          },
         ],
         productLaunches: [
           { competitor: "Competitor B", product: "AI-powered analytics", date: "2026-03-10" },
@@ -34,7 +39,7 @@ class CompetitorIntelAgent implements Agent {
     };
   }
 
-  async analyze(context: AgentContext, data: IngestResult): Promise<AnalysisResult> {
+  async analyze(context: AgentContext, _data: IngestResult): Promise<AnalysisResult> {
     return {
       agentId: this.id,
       insights: [
@@ -52,7 +57,10 @@ class CompetitorIntelAgent implements Agent {
     };
   }
 
-  async generateOpportunities(context: AgentContext, analysis: AnalysisResult): Promise<Opportunity[]> {
+  async generateOpportunities(
+    context: AgentContext,
+    _analysis: AnalysisResult,
+  ): Promise<Opportunity[]> {
     return [
       {
         id: generateId(),

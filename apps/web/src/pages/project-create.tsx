@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from "react";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PageHeader } from "@/components/shared/page-header";
 
 const industries = [
   "Technology",
@@ -39,11 +39,7 @@ export function ProjectCreate() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Acme Corp AI Strategy"
-                required
-              />
+              <Input id="name" placeholder="e.g., Acme Corp AI Strategy" required />
             </div>
 
             <div className="space-y-2">
@@ -77,11 +73,7 @@ export function ProjectCreate() {
 
             <div className="space-y-2">
               <Label htmlFor="website">Website URL</Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://example.com"
-              />
+              <Input id="website" type="url" placeholder="https://example.com" />
             </div>
 
             <div className="space-y-2">
@@ -98,9 +90,7 @@ export function ProjectCreate() {
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit">Create Project</Button>
               {submitted && (
-                <span className="text-sm text-accent-green">
-                  Project created (mock)
-                </span>
+                <span className="text-sm text-accent-green">Project created (mock)</span>
               )}
             </div>
           </form>

@@ -1,9 +1,10 @@
-import IORedis from "ioredis";
 import { logger } from "@chief-mog/lib";
+import type { ConnectionOptions } from "bullmq";
+import IORedis from "ioredis";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
-export function createRedisConnection(): IORedis {
+export function createRedisConnection(): ConnectionOptions {
   const url = new URL(redisUrl);
   const connection = new IORedis({
     host: url.hostname,
@@ -19,5 +20,5 @@ export function createRedisConnection(): IORedis {
     logger.error("Redis connection error", { error: String(err) });
   });
 
-  return connection;
+  return connection as unknown as ConnectionOptions;
 }

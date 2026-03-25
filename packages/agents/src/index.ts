@@ -1,5 +1,5 @@
-export type { Agent, AgentContext, IngestResult, AnalysisResult } from "./interface.js";
-export { registerAgent, getAgent, getAllAgents } from "./registry.js";
+export type { Agent, AgentContext, AnalysisResult, IngestResult } from "./interface.js";
+export { getAgent, getAllAgents, registerAgent } from "./registry.js";
 
 // Import agents to trigger registration
 import "./agents/search-mog.js";

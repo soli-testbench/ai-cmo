@@ -1,8 +1,8 @@
-import { Worker } from "bullmq";
-import type { Job } from "bullmq";
 import { logger } from "@chief-mog/lib";
-import { runAnalysis } from "../jobs/run-analysis.js";
+import type { Job } from "bullmq";
+import { Worker } from "bullmq";
 import type { RunAnalysisInput, RunAnalysisResult } from "../jobs/run-analysis.js";
+import { runAnalysis } from "../jobs/run-analysis.js";
 import { createRedisConnection } from "../lib/redis.js";
 
 export function createAnalysisWorker(): Worker<RunAnalysisInput, RunAnalysisResult> {

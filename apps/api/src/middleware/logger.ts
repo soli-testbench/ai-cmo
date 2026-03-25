@@ -1,5 +1,5 @@
-import { createMiddleware } from "hono/factory";
 import { logger } from "@chief-mog/lib";
+import { createMiddleware } from "hono/factory";
 
 export const loggerMiddleware = createMiddleware(async (c, next) => {
   const start = Date.now();
