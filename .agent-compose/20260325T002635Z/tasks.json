@@ -171,7 +171,7 @@
             "Implement GET /health route returning status, timestamp, version",
             "Start the server with tsx and verify /health responds"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b2",
@@ -184,7 +184,7 @@
             "Test: request to /api/projects without auth header returns 401",
             "Test: request to /health works without auth"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b3",
@@ -196,7 +196,7 @@
             "Test each route returns correct status codes and response shape",
             "Test POST validation rejects invalid input with 400"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b4",
@@ -208,7 +208,7 @@
             "Test analyze endpoint returns queued status",
             "Test opportunities endpoint returns array of opportunities"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b5",
@@ -226,7 +226,7 @@
             "Register all 5 agents in the registry on module load",
             "Test: registry contains 5 agents, each returns valid mock data"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b6",
@@ -242,7 +242,7 @@
             "Implement apps/worker/src/index.ts entry point that starts all workers",
             "Test: mock job is processed and AgentRun record is created"
           ],
-          "passes": false
+          "passes": true
         },
         {
           "id": "b7",
@@ -254,7 +254,7 @@
             "Run turbo typecheck for all backend packages",
             "Run turbo lint for all backend packages"
           ],
-          "passes": false
+          "passes": true
         }
       ],
       "quality_checklist": [
