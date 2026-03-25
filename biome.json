@@ -1,13 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": {
-          "level": "on"
-        }
-      }
-    }
+  "organizeImports": {
+    "enabled": true
   },
   "linter": {
     "enabled": true,
@@ -20,5 +14,8 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
+  },
+  "files": {
+    "ignore": ["node_modules", "dist", ".turbo", "*.json"]
   }
 }

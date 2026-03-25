@@ -1,21 +1,28 @@
 {
   "name": "@chief-mog/worker",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'worker placeholder'",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/"
   },
   "dependencies": {
+    "bullmq": "^5.71.0",
+    "ioredis": "^5.4.0",
     "@chief-mog/types": "*",
     "@chief-mog/config": "*",
-    "@chief-mog/lib": "*"
+    "@chief-mog/lib": "*",
+    "@chief-mog/db": "*",
+    "@chief-mog/agents": "*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.8",
-    "typescript": "~5.7.0"
+    "typescript": "~5.7.0",
+    "tsx": "^4.21.0",
+    "vitest": "^4.1.1"
   }
 }
