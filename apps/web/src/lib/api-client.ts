@@ -3,25 +3,39 @@ import type { InsertProject, Opportunity, Project } from "@chief-mog/types";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 /**
- * Session-based API request helper.
- *
- * Authentication uses httpOnly cookies set by the backend login endpoint.
- * The frontend never handles raw tokens — `credentials: "include"` ensures
- * cookies are sent with every request, and the backend validates the session.
- *
- * For local development without a running backend, requests fall through to
- * mock data (see individual api methods below).
+ * Whether mock fallbacks are enabled. Must be explicitly opted into via
+ * VITE_MOCK_API=true. When enabled, failed API requests return static
+ * fixture data instead of throwing — useful for local UI development
+ * without a running backend.
  */
+const MOCK_ENABLED = import.meta.env.VITE_MOCK_API === "true";
+
+/**
+ * API request helper.
+ *
+ * Authentication uses Bearer JWT tokens. The token is stored in-memory
+ * and attached to every request via the Authorization header, matching
+ * the backend's JWT verification middleware.
+ */
+let _authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  _authToken = token;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options?.headers as Record<string, string>) ?? {}),
   };
 
+  if (_authToken) {
+    headers.Authorization = `Bearer ${_authToken}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
-    credentials: "include",
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);
@@ -29,7 +43,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// Mock data for standalone frontend development
+// Fixture data used only when VITE_MOCK_API=true
 const mockProjects: Project[] = [
   {
     id: "550e8400-e29b-41d4-a716-446655440001",
@@ -118,20 +132,12 @@ const mockOpportunities: Opportunity[] = [
 
 export const api = {
   async getProjects(): Promise<Project[]> {
-    try {
-      return await request<Project[]>("/api/projects");
-    } catch {
-      return mockProjects;
-    }
+    if (MOCK_ENABLED) return mockProjects;
+    return request<Project[]>("/api/projects");
   },
 
   async createProject(data: InsertProject): Promise<Project> {
-    try {
-      return await request<Project>("/api/projects", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-    } catch {
+    if (MOCK_ENABLED) {
       return {
         ...data,
         id: crypto.randomUUID(),
@@ -139,25 +145,23 @@ export const api = {
         updatedAt: new Date(),
       };
     }
+    return request<Project>("/api/projects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 
   async getOpportunities(projectId: string): Promise<Opportunity[]> {
-    try {
-      return await request<Opportunity[]>(`/api/projects/${projectId}/opportunities`);
-    } catch {
-      return mockOpportunities.filter((o) => o.projectId === projectId);
-    }
+    if (MOCK_ENABLED) return mockOpportunities.filter((o) => o.projectId === projectId);
+    return request<Opportunity[]>(`/api/projects/${projectId}/opportunities`);
   },
 
   async triggerAnalysis(projectId: string): Promise<{ jobId: string; status: string }> {
-    try {
-      return await request<{ jobId: string; status: string }>(
-        `/api/projects/${projectId}/analyze`,
-        { method: "POST" },
-      );
-    } catch {
-      return { jobId: crypto.randomUUID(), status: "queued" };
-    }
+    if (MOCK_ENABLED) return { jobId: crypto.randomUUID(), status: "queued" };
+    return request<{ jobId: string; status: string }>(
+      `/api/projects/${projectId}/analyze`,
+      { method: "POST" },
+    );
   },
 };
 
