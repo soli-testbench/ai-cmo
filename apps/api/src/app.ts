@@ -20,13 +20,16 @@ app.onError((err, c) => {
 });
 
 // Global middleware
-app.use("*", cors());
+// TODO(security): Restrict CORS origin to allowed domains before production
+// e.g. cors({ origin: [process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173'] })
+app.use("*", cors({ origin: process.env.CORS_ORIGIN ?? "*" }));
 app.use("*", loggerMiddleware);
 
 // Public routes
 app.route("/", healthRoutes);
 
 // Protected routes
+// TODO(security): Add rate limiting middleware before production exposure
 app.use("/api/*", authMiddleware);
 app.route("/api", projectRoutes);
 app.route("/api", analysisRoutes);

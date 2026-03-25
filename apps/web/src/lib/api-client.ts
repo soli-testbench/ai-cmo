@@ -2,14 +2,21 @@ import type { InsertProject, Opportunity, Project } from "@chief-mog/types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+// TODO(security): Implement proper auth flow (e.g. login → JWT → stored token)
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((options?.headers as Record<string, string>) ?? {}),
+  };
+
+  const token = import.meta.env.VITE_API_TOKEN;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer placeholder",
-      ...options?.headers,
-    },
+    headers,
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);
