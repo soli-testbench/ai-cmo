@@ -1,2 +1,1 @@
-// Placeholder — frontend task fills this in
-export {};
+export { cn } from "./utils.js";
