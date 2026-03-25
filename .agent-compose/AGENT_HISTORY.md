@@ -1,3 +1,12 @@
+## security-fixer — 2026-03-25T03:27:26Z
+
+- **Feedback**: CI build failed — TypeScript errors in `apps/worker/src/lib/redis.ts` (TS2352, TS2769, TS2493) due to invalid `ConstructorParameters<typeof IORedis>[0]` cast resolving to empty tuple.
+- **Actions taken**:
+  1. `apps/worker/src/lib/redis.ts` — Replaced `Record<string, unknown>` opts type with proper `RedisOptions` import from ioredis; replaced invalid `ConstructorParameters<typeof IORedis>[0]` cast with direct `RedisOptions` typed parameter.
+- **Files changed**: apps/worker/src/lib/redis.ts
+- **Tests run**: yes — 111/111 tests pass (9 test files); 2 web test files fail due to pre-existing module resolution issues (unrelated)
+- **Outcome**: success — full monorepo build (9/9 packages) succeeds
+
 ## security-fixer — 2026-03-25T03:16:09Z
 
 - **Feedback**: Multiple medium-severity findings: JWT accepts tokens without exp, Redis URL auth/TLS dropped in API and worker, worker does not persist AgentRun to DB, docs mismatch with implementation.
