@@ -1,15 +1,30 @@
 import "dotenv/config";
 import { z } from "zod";
 
-export const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url().default("redis://localhost:6379"),
-  API_PORT: z.coerce.number().default(3001),
-  WEB_PORT: z.coerce.number().default(3000),
-  WORKER_CONCURRENCY: z.coerce.number().default(5),
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-});
+export const envSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    DATABASE_URL: z.string().url(),
+    REDIS_URL: z.string().url().default("redis://localhost:6379"),
+    API_PORT: z.coerce.number().default(3001),
+    WEB_PORT: z.coerce.number().default(3000),
+    WORKER_CONCURRENCY: z.coerce.number().default(5),
+    LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  })
+  .superRefine((data, ctx) => {
+    // Reject default/weak DB credentials in non-development environments
+    if (data.NODE_ENV !== "development" && data.NODE_ENV !== "test") {
+      const url = data.DATABASE_URL.toLowerCase();
+      if (url.includes(":postgres@") || url.includes("password=postgres")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["DATABASE_URL"],
+          message:
+            "Default database credentials are not allowed in production. Set a strong password.",
+        });
+      }
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

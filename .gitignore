@@ -6,3 +6,6 @@ dist/
 .turbo/
 coverage/
 .DS_Store
+# Agent operational artifacts (run dirs, pointer files)
+.agent-compose/*/
+.agent-compose/current
