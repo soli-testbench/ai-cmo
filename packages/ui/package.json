@@ -1,0 +1,22 @@
+{
+  "name": "@chief-mog/ui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'ui lint placeholder'",
+    "test": "echo 'ui test placeholder'"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.0"
+  }
+}

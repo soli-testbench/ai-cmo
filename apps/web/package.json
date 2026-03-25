@@ -1,0 +1,16 @@
+{
+  "name": "@chief-mog/web",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'web placeholder'",
+    "build": "echo 'web build placeholder'",
+    "typecheck": "echo 'web typecheck placeholder'",
+    "lint": "echo 'web lint placeholder'",
+    "test": "echo 'web test placeholder'"
+  },
+  "dependencies": {
+    "@chief-mog/types": "*"
+  }
+}
