@@ -1,12 +1,12 @@
 import { logger } from "@chief-mog/lib";
 import type { ConnectionOptions } from "bullmq";
-import IORedis from "ioredis";
+import IORedis, { type RedisOptions } from "ioredis";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
 export function createRedisConnection(): ConnectionOptions {
   const url = new URL(redisUrl);
-  const opts: Record<string, unknown> = {
+  const opts: RedisOptions = {
     host: url.hostname,
     port: Number(url.port) || 6379,
     maxRetriesPerRequest: null,
@@ -17,7 +17,7 @@ export function createRedisConnection(): ConnectionOptions {
   const dbIndex = url.pathname.replace("/", "");
   if (dbIndex) opts.db = Number(dbIndex);
 
-  const connection = new IORedis(opts as ConstructorParameters<typeof IORedis>[0]);
+  const connection = new IORedis(opts);
 
   connection.on("connect", () => {
     logger.info("Redis connected");
