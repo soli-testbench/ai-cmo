@@ -24,7 +24,7 @@ export async function retry<T>(fn: () => Promise<T>, options: RetryOptions = {})
       lastError = error;
       if (i < attempts - 1) {
         const delay = backoff ? delayMs * 2 ** i : delayMs;
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await sleep(delay);
       }
     }
   }
