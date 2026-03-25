@@ -1,0 +1,542 @@
+{
+  "quality": "full",
+  "tasks": [
+    {
+      "id": "foundation",
+      "title": "Monorepo foundation, shared packages, database, and docs",
+      "description": "Set up the complete monorepo infrastructure: Turborepo + npm workspaces, shared TypeScript config, Biome linting, Docker Compose for PostgreSQL + Redis, all shared packages (types, config, lib, db), database schema with Drizzle ORM, migrations, seed script, architecture documentation, and root-level Dockerfile for CI.",
+      "acceptance_criteria": "1. `npm install` succeeds at root and all workspaces resolve\n2. `turbo build` compiles all packages\n3. `turbo lint` and `turbo typecheck` pass\n4. Docker Compose brings up PostgreSQL and Redis\n5. `npm run db:migrate` creates all tables\n6. `npm run db:seed` inserts demo project with related data\n7. All shared packages export correct types and utilities\n8. docs/ contains architecture.md, domain-model.md, agent-interface.md, dev-setup.md\n9. Dockerfile builds successfully\n10. `turbo test` runs vitest and passes",
+      "claudeMd": "# Foundation Task Context\n\nYou are scaffolding the monorepo foundation for \"Chief MOG Officer\" — an AI-powered competitive intelligence platform.\n\n## Monorepo Structure\n\n```\n/\n├── apps/web/          # (created by frontend task — leave package.json placeholder)\n├── apps/api/          # (created by backend task — leave package.json placeholder)\n├── apps/worker/       # (created by backend task — leave package.json placeholder)\n├── packages/types/    # Zod schemas + TS types for all domain models\n├── packages/config/   # Env validation with Zod\n├── packages/lib/      # Logger, error classes, utilities\n├── packages/db/       # Drizzle schema, migrations, connection, seed\n├── packages/ui/       # Placeholder — frontend task fills this in\n├── packages/agents/   # Placeholder — backend task fills this in\n├── docs/              # Architecture documentation\n├── docker-compose.yml\n├── Dockerfile\n├── turbo.json\n├── tsconfig.base.json\n├── biome.json\n└── package.json\n```\n\n## Key Libraries & Versions\n\n- `turbo@2.8.20` — monorepo build orchestration\n- `typescript@~5.7` — language\n- `drizzle-orm@0.45.1` + `drizzle-kit@0.31.10` — ORM + migration tool\n- `postgres@3.4.8` — PostgreSQL driver (the `postgres` package, NOT `pg`)\n- `zod@4.3.6` — schema validation (NOTE: Zod 4 uses `import { z } from 'zod/v4'` or just `import { z } from 'zod'` if using the compat layer — check which import style works)\n- `@biomejs/biome@2.4.8` — linter + formatter\n- `vitest@4.1.1` — test runner\n- `tsx@4.21.0` — run TS scripts in dev\n- `dotenv@latest` — env loading\n\n## Package: packages/types\n\nDefine Zod schemas and export inferred TS types for ALL domain models:\n\n- **User**: id (uuid), email, name, role (enum: admin/member), createdAt, updatedAt\n- **Project**: id (uuid), name, description, companyProfileId (nullable uuid), userId (uuid), status (enum: active/paused/archived), createdAt, updatedAt\n- **CompanyProfile**: id (uuid), projectId (uuid), name, industry, description, website (nullable), keywords (string[]), createdAt, updatedAt\n- **NarrativeModel**: id (uuid), projectId (uuid), coreNarrative, themes (string[]), voiceTone, targetAudiences (string[]), createdAt, updatedAt\n- **CompetitorProfile**: id (uuid), projectId (uuid), name, website (nullable), description, strengths (string[]), weaknesses (string[]), createdAt, updatedAt\n- **Opportunity**: id (uuid), projectId (uuid), agentId (string), type (enum: search/geo/reddit/competitor/content), title, description, score (number 0-100), metadata (json), status (enum: new/reviewed/acted/dismissed), createdAt, updatedAt\n- **Asset**: id (uuid), projectId (uuid), opportunityId (nullable uuid), type (enum: article/social/email/ad), title, content (text), status (enum: draft/published/archived), createdAt, updatedAt\n- **Campaign**: id (uuid), projectId (uuid), name, description, status (enum: draft/active/completed), startDate (nullable), endDate (nullable), createdAt, updatedAt\n- **AgentRun**: id (uuid), projectId (uuid), agentId (string), status (enum: pending/running/completed/failed), startedAt, completedAt (nullable), result (json nullable), error (text nullable), createdAt\n- **DailyDigest**: id (uuid), projectId (uuid), date, summary (text), opportunityCount (number), agentRunIds (string[]), createdAt\n\nExport both Zod schemas (e.g., `ProjectSchema`) and inferred types (e.g., `type Project = z.infer<typeof ProjectSchema>`). Also export insert schemas (omitting id, createdAt, updatedAt) as `InsertProjectSchema` etc.\n\nEach schema file should be in its own file: `packages/types/src/user.ts`, `packages/types/src/project.ts`, etc. with a barrel export from `packages/types/src/index.ts`.\n\n## Package: packages/config\n\nUse Zod to validate environment variables. Export a typed `env` object:\n\n```typescript\nconst envSchema = z.object({\n  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),\n  DATABASE_URL: z.string().url(),\n  REDIS_URL: z.string().url().default('redis://localhost:6379'),\n  API_PORT: z.coerce.number().default(3001),\n  WEB_PORT: z.coerce.number().default(3000),\n  WORKER_CONCURRENCY: z.coerce.number().default(5),\n  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),\n});\n```\n\n## Package: packages/lib\n\n- **Logger**: Simple structured logger (console-based, JSON in production, pretty in dev). Levels: debug, info, warn, error. Include timestamp and optional context.\n- **AppError**: Base error class with `code`, `statusCode`, `message`. Subclasses: `NotFoundError`, `ValidationError`, `UnauthorizedError`.\n- **Utility functions**: `generateId()` (uuid v4), `sleep(ms)`, `retry(fn, opts)` helper.\n\n## Package: packages/db\n\n- **Connection**: `packages/db/src/connection.ts` — create and export a `drizzle` instance using `postgres` driver. Read `DATABASE_URL` from env.\n- **Schema**: `packages/db/src/schema/` — Drizzle table definitions matching the domain types above. Use `pgTable`, proper column types, foreign keys, and indexes.\n- **Migrations**: Configure `drizzle-kit` with a `drizzle.config.ts` at the package root. The migration command should be a script in packages/db/package.json.\n- **Seed**: `packages/db/src/seed.ts` — insert one demo project (\"Acme Corp AI Strategy\") with:\n  - 1 user (demo@example.com)\n  - 1 project\n  - 1 company profile\n  - 1 narrative model\n  - 2 competitor profiles\n  - 5 sample opportunities (one per agent type)\n  - 2 agent runs (completed)\n  - 1 daily digest\n\n## Docker Compose\n\n```yaml\nservices:\n  postgres:\n    image: postgres:16-alpine\n    ports: [\"5432:5432\"]\n    environment:\n      POSTGRES_DB: chief_mog\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: postgres\n    volumes: [pgdata:/var/lib/postgresql/data]\n  redis:\n    image: redis:7-alpine\n    ports: [\"6379:6379\"]\nvolumes:\n  pgdata:\n```\n\n## .env.example\n\n```\nNODE_ENV=development\nDATABASE_URL=postgresql://postgres:postgres@localhost:5432/chief_mog\nREDIS_URL=redis://localhost:6379\nAPI_PORT=3001\nWEB_PORT=3000\nWORKER_CONCURRENCY=5\nLOG_LEVEL=debug\n```\n\n## Dockerfile\n\nMulti-stage build:\n1. Stage 1 (builder): node:22-alpine, copy repo, `npm ci`, `turbo build`\n2. Stage 2 (runner): node:22-alpine, copy built artifacts, expose port 3001, CMD runs the API\n\nThis must work with the existing CI that runs `docker build .`.\n\n## Root Configuration\n\n**package.json** (root):\n- `workspaces`: [\"apps/*\", \"packages/*\"]\n- Scripts: `dev`, `build`, `lint`, `format`, `typecheck`, `test`, `db:migrate`, `db:seed`\n- All scripts delegate to turbo where appropriate\n\n**turbo.json**:\n- Pipeline: build (depends on ^build), dev (persistent), lint, typecheck, test\n- Proper caching configuration\n\n**tsconfig.base.json**:\n- target: ES2022, module: ESNext, moduleResolution: bundler\n- strict: true, composite: true\n- paths for workspace packages\n\n**biome.json**:\n- Linting: recommended rules\n- Formatting: tabs→spaces (2), line width 100\n- Organize imports\n\n## Documentation\n\nCreate these files in `docs/`:\n\n1. **architecture.md** — system overview diagram (ASCII), module responsibilities, data flow between API/worker/agents/DB\n2. **domain-model.md** — entity descriptions, relationships, field definitions\n3. **agent-interface.md** — Agent contract, lifecycle (ingest→analyze→generateOpportunities→summarize), how to create a new agent\n4. **dev-setup.md** — Prerequisites (Node 22, Docker), clone instructions, setup steps, how to run each service, how to run migrations/seed, how to run tests/lint\n\n## Apps Placeholders\n\nFor `apps/web`, `apps/api`, and `apps/worker`, create minimal placeholder `package.json` files so the workspace resolves. The other tasks will fill in the actual code. Each should have:\n- A name: `@chief-mog/web`, `@chief-mog/api`, `@chief-mog/worker`\n- Dependencies on the shared packages: `@chief-mog/types`, `@chief-mog/config`, `@chief-mog/lib`\n- A minimal `tsconfig.json` extending the base\n- A minimal `src/index.ts` that exports nothing or logs a placeholder message\n\nFor `packages/ui` and `packages/agents`, similarly create minimal placeholders.\n\n## Testing\n\nAdd a vitest workspace config at root. Each package should have a basic test:\n- `packages/types` — test that schemas validate correctly\n- `packages/lib` — test logger and error classes\n- `packages/config` — test env validation\n\n## IMPORTANT Notes\n\n- Do NOT modify anything under `.github/workflows/`\n- Use `type: \"module\"` in all package.json files\n- All imports must use `.js` extensions for ESM compatibility in TypeScript\n- Use `exports` field in package.json for all packages\n- Zod v4 may require `import { z } from 'zod'` — verify the import path works\n- The `postgres` package (not `pg`) is used as the PostgreSQL driver for Drizzle\n- Generate the first migration after defining schema: `npx drizzle-kit generate`",
+      "checklist": [
+        {
+          "id": "f1",
+          "description": "Root monorepo configuration with Turborepo, npm workspaces, TypeScript, and Biome",
+          "steps": [
+            "Create root package.json with workspaces: ['apps/*', 'packages/*'] and all scripts",
+            "Create turbo.json with build/dev/lint/typecheck/test pipeline",
+            "Create tsconfig.base.json with strict mode, ESNext module, bundler resolution",
+            "Create biome.json with recommended linting and 2-space formatting",
+            "Create .gitignore covering node_modules, dist, .env, etc.",
+            "Create .env.example with all required environment variables",
+            "Run npm install at root and verify it succeeds"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f2",
+          "description": "packages/types with Zod schemas and TS types for all 10 domain models",
+          "steps": [
+            "Create packages/types/package.json with zod dependency and exports config",
+            "Create packages/types/tsconfig.json extending base",
+            "Create individual schema files for each domain model (user.ts, project.ts, company-profile.ts, narrative-model.ts, competitor-profile.ts, opportunity.ts, asset.ts, campaign.ts, agent-run.ts, daily-digest.ts)",
+            "Export both runtime schemas and inferred types from each file",
+            "Create insert schemas (omitting auto-generated fields) for each model",
+            "Create barrel export in packages/types/src/index.ts",
+            "Write basic tests validating schemas accept correct data and reject invalid data",
+            "Run turbo build for packages/types and verify it compiles"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f3",
+          "description": "packages/config with Zod-based environment validation",
+          "steps": [
+            "Create packages/config/package.json with zod and dotenv dependencies",
+            "Create packages/config/tsconfig.json extending base",
+            "Implement env schema with all variables (DATABASE_URL, REDIS_URL, API_PORT, etc.)",
+            "Export typed env object that validates on import",
+            "Write test that validates correct env and rejects missing required vars",
+            "Verify package compiles with turbo build"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f4",
+          "description": "packages/lib with logger, error classes, and utility functions",
+          "steps": [
+            "Create packages/lib/package.json and tsconfig.json",
+            "Implement structured logger with levels (debug/info/warn/error), JSON in production, pretty in dev",
+            "Implement AppError base class and subclasses (NotFoundError, ValidationError, UnauthorizedError)",
+            "Implement utility functions: generateId (uuid), sleep, retry",
+            "Write tests for logger output, error classes, and utilities",
+            "Verify package compiles"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f5",
+          "description": "packages/db with Drizzle schema, migrations, and seed script",
+          "steps": [
+            "Create packages/db/package.json with drizzle-orm, drizzle-kit, postgres dependencies",
+            "Create packages/db/tsconfig.json extending base",
+            "Create packages/db/src/connection.ts with drizzle + postgres driver setup",
+            "Create schema files in packages/db/src/schema/ for all domain tables with proper types, foreign keys, and indexes",
+            "Create packages/db/drizzle.config.ts for migration config",
+            "Create packages/db/src/seed.ts with demo data (1 user, 1 project, 1 company profile, 1 narrative, 2 competitors, 5 opportunities, 2 agent runs, 1 digest)",
+            "Add db:generate, db:migrate, db:seed scripts to package.json",
+            "Verify schema compiles and drizzle-kit can generate migration SQL"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f6",
+          "description": "Docker Compose with PostgreSQL and Redis, plus Dockerfile",
+          "steps": [
+            "Create docker-compose.yml with postgres:16-alpine and redis:7-alpine services",
+            "Map ports 5432 and 6379, set POSTGRES_DB=chief_mog",
+            "Create multi-stage Dockerfile (node:22-alpine builder + runner)",
+            "Verify docker compose config is valid",
+            "Verify docker build succeeds (this is what CI tests)"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f7",
+          "description": "Placeholder packages and apps for workspace resolution",
+          "steps": [
+            "Create minimal package.json + tsconfig.json + src/index.ts for apps/web, apps/api, apps/worker",
+            "Create minimal package.json + tsconfig.json + src/index.ts for packages/ui, packages/agents",
+            "Ensure all packages reference shared dependencies (@chief-mog/types, etc.)",
+            "Run npm install and verify all workspaces resolve without errors"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f8",
+          "description": "Architecture documentation in docs/",
+          "steps": [
+            "Create docs/architecture.md with system overview, module responsibilities, data flow diagram",
+            "Create docs/domain-model.md with entity descriptions, relationships, field definitions",
+            "Create docs/agent-interface.md with agent contract, lifecycle, and how to add new agents",
+            "Create docs/dev-setup.md with prerequisites, setup steps, service commands, migration/seed instructions",
+            "Ensure all docs are accurate and reference actual file paths"
+          ],
+          "passes": false
+        },
+        {
+          "id": "f9",
+          "description": "Vitest configuration and all package tests pass",
+          "steps": [
+            "Create vitest workspace config at root",
+            "Ensure each package with tests has vitest in devDependencies",
+            "Run turbo test and verify all tests pass",
+            "Run turbo typecheck and verify no type errors",
+            "Run turbo lint and verify no lint errors"
+          ],
+          "passes": false
+        }
+      ],
+      "quality_checklist": [
+        {
+          "id": "fq1",
+          "description": "No duplicate type definitions — types package is the single source of truth",
+          "steps": ["Grep for duplicate Zod schema definitions across packages", "Verify db schema imports types from @chief-mog/types or re-derives consistently"],
+          "passes": false
+        },
+        {
+          "id": "fq2",
+          "description": "All package.json exports fields correctly configured for ESM",
+          "steps": ["Check each package.json has type: module", "Verify exports field maps to correct dist paths", "Ensure tsconfig has proper composite/declaration settings"],
+          "passes": false
+        },
+        {
+          "id": "fq3",
+          "description": "No hardcoded values — all config comes from env validation",
+          "steps": ["Grep for hardcoded port numbers, URLs, or credentials in source files", "Verify .env.example documents all required variables"],
+          "passes": false
+        },
+        {
+          "id": "fq4",
+          "description": "Documentation is accurate and references real file paths",
+          "steps": ["Cross-reference docs/dev-setup.md commands with actual package.json scripts", "Verify architecture.md structure matches actual directory layout"],
+          "passes": false
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "API server, worker process, and agent framework",
+      "description": "Implement the Hono API server with all stub routes, BullMQ worker with job processing, and the agent framework with 5 stub agents. The API serves HTTP requests, the worker processes background jobs, and agents provide the intelligence layer.",
+      "acceptance_criteria": "1. API starts on configured port and responds to GET /health\n2. GET /api/projects returns project list (mock or from DB)\n3. POST /api/projects validates input and returns created project\n4. POST /api/projects/:id/analyze enqueues a BullMQ job\n5. GET /api/projects/:id/opportunities returns opportunity list\n6. Worker starts and connects to Redis\n7. Worker processes analysis jobs and creates AgentRun records\n8. Agent interface is defined with ingest/analyze/generateOpportunities/summarize methods\n9. At least 5 stub agents are registered and return mock data\n10. Tests pass for API routes, worker job processing, and agent contract",
+      "claudeMd": "# Backend Task Context\n\nYou are building the API server, background worker, and agent framework for \"Chief MOG Officer\".\n\n## Important: Shared Packages\n\nThe foundation task creates shared packages. Import from them:\n- `@chief-mog/types` — domain Zod schemas and TypeScript types\n- `@chief-mog/config` — validated env object\n- `@chief-mog/lib` — logger, AppError classes, generateId, retry\n- `@chief-mog/db` — Drizzle database connection and schema\n\nIf these packages aren't built yet when you start, create the necessary imports and trust they'll resolve after integration. You can also build them first with `turbo build --filter=@chief-mog/types --filter=@chief-mog/config --filter=@chief-mog/lib --filter=@chief-mog/db`.\n\n## Apps to Implement\n\n### apps/api (Hono HTTP Server)\n\n**Libraries:**\n- `hono@4.12.9` — web framework\n- `@hono/node-server@1.19.11` — Node.js adapter\n- `@hono/zod-validator@0.7.6` — request validation\n- `zod@4.3.6` — schemas (re-use from @chief-mog/types)\n- `bullmq@5.71.0` — to enqueue jobs\n\n**package.json:**\n```json\n{\n  \"name\": \"@chief-mog/api\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"tsx watch src/index.ts\",\n    \"build\": \"tsc\",\n    \"start\": \"node dist/index.js\",\n    \"test\": \"vitest run\",\n    \"typecheck\": \"tsc --noEmit\",\n    \"lint\": \"biome check src/\"\n  }\n}\n```\n\n**Structure:**\n```\napps/api/src/\n├── index.ts          # Server entry: create Hono app, apply middleware, start server\n├── app.ts            # Hono app instance with all routes mounted\n├── middleware/\n│   ├── auth.ts       # Placeholder auth middleware (checks Authorization header exists)\n│   ├── error.ts      # Global error handler (catches AppError, returns JSON)\n│   └── logger.ts     # Request logging middleware\n├── routes/\n│   ├── health.ts     # GET /health\n│   ├── projects.ts   # GET/POST /api/projects, GET /api/projects/:id\n│   ├── analysis.ts   # POST /api/projects/:id/analyze\n│   └── opportunities.ts  # GET /api/projects/:id/opportunities\n└── lib/\n    └── queue.ts      # BullMQ queue connection for enqueuing analysis jobs\n```\n\n**Route implementations:**\n\n`GET /health` — return `{ status: 'ok', timestamp: new Date().toISOString(), version: '0.1.0' }`\n\n`GET /api/projects` — query projects from database using Drizzle, return as JSON array. If DB not available, return mock data.\n\n`POST /api/projects` — validate body with InsertProjectSchema from @chief-mog/types, insert into DB (or mock), return created project with 201 status.\n\n`GET /api/projects/:id` — fetch single project by ID from DB.\n\n`POST /api/projects/:id/analyze` — enqueue an 'analysis' job to BullMQ with `{ projectId }`, return `{ jobId, status: 'queued' }`.\n\n`GET /api/projects/:id/opportunities` — query opportunities for project from DB, return as JSON array.\n\n**Auth middleware:** Check for `Authorization` header. If missing, return 401. If present, pass through (no actual verification — it's a placeholder). Apply to all `/api/*` routes but NOT `/health`.\n\n**Error middleware:** Catch errors thrown in routes. If `AppError`, return `{ error: { code, message } }` with appropriate status code. Otherwise return 500.\n\n**CORS:** Enable CORS for all origins in development.\n\n### apps/worker (BullMQ Worker)\n\n**Libraries:**\n- `bullmq@5.71.0` — job queue and worker\n- `ioredis@5` — Redis client (BullMQ peer dep)\n\n**package.json:**\n```json\n{\n  \"name\": \"@chief-mog/worker\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"tsx watch src/index.ts\",\n    \"build\": \"tsc\",\n    \"start\": \"node dist/index.js\",\n    \"test\": \"vitest run\",\n    \"typecheck\": \"tsc --noEmit\",\n    \"lint\": \"biome check src/\"\n  }\n}\n```\n\n**Structure:**\n```\napps/worker/src/\n├── index.ts          # Entry: start workers, register shutdown handlers\n├── workers/\n│   ├── analysis.ts   # Analysis queue worker — runs agents for a project\n│   └── scheduled.ts  # Scheduled daily analysis (cron-based repeatable job)\n├── jobs/\n│   ├── run-analysis.ts   # Job handler: execute all agents for a project\n│   └── run-agent.ts      # Job handler: execute a single agent\n└── lib/\n    └── redis.ts      # Shared Redis/IORedis connection\n```\n\n**Worker flow:**\n1. `analysis` worker receives job with `{ projectId, agentId? }`\n2. If `agentId` specified, run only that agent; otherwise run all 5\n3. For each agent:\n   a. Create AgentRun record in DB (status: 'running')\n   b. Call `agent.ingest()` → `agent.analyze()` → `agent.generateOpportunities()` → `agent.summarize()`\n   c. Save generated opportunities to DB\n   d. Update AgentRun (status: 'completed', result: summary)\n   e. On error: update AgentRun (status: 'failed', error: message)\n4. Return aggregated results\n\n**Scheduled worker:** Register a repeatable job that runs daily at 6:00 UTC. The handler fetches all active projects and enqueues individual analysis jobs for each.\n\n**Graceful shutdown:** Listen for SIGTERM/SIGINT, close workers cleanly.\n\n### packages/agents (Agent Framework)\n\n**Structure:**\n```\npackages/agents/src/\n├── index.ts              # Barrel export + agent registry\n├── interface.ts          # Agent interface and related types\n├── registry.ts           # Agent registry (Map<string, Agent>)\n├── agents/\n│   ├── search-mog.ts     # SearchMogAgent stub\n│   ├── geo.ts            # GeoAgent stub\n│   ├── reddit-mog.ts     # RedditMogAgent stub\n│   ├── competitor-intel.ts # CompetitorIntelAgent stub\n│   └── content-foundry.ts # ContentFoundryAgent stub\n└── __tests__/\n    └── agents.test.ts    # Test all agents implement interface and return mock data\n```\n\n**Agent interface:**\n```typescript\nexport interface AgentContext {\n  projectId: string;\n  companyProfile: CompanyProfile;\n  narrativeModel?: NarrativeModel;\n  competitors: CompetitorProfile[];\n}\n\nexport interface IngestResult {\n  agentId: string;\n  data: Record<string, unknown>;\n  timestamp: Date;\n}\n\nexport interface AnalysisResult {\n  agentId: string;\n  insights: string[];\n  confidence: number;\n  metadata: Record<string, unknown>;\n}\n\nexport interface Agent {\n  id: string;\n  name: string;\n  description: string;\n  ingest(context: AgentContext): Promise<IngestResult>;\n  analyze(context: AgentContext, data: IngestResult): Promise<AnalysisResult>;\n  generateOpportunities(context: AgentContext, analysis: AnalysisResult): Promise<Opportunity[]>;\n  summarize(context: AgentContext, opportunities: Opportunity[]): Promise<string>;\n}\n```\n\n**Agent registry:**\n```typescript\nconst registry = new Map<string, Agent>();\nexport function registerAgent(agent: Agent) { registry.set(agent.id, agent); }\nexport function getAgent(id: string): Agent | undefined { return registry.get(id); }\nexport function getAllAgents(): Agent[] { return [...registry.values()]; }\n```\n\n**Stub agents:** Each agent should:\n- Have a unique `id` (e.g., 'search-mog', 'geo', 'reddit-mog', 'competitor-intel', 'content-foundry')\n- Return realistic-looking mock data from each method\n- Be registered in the registry on module load\n- `ingest()` — return mock raw data relevant to the agent's domain\n- `analyze()` — return 2-3 mock insights with 0.7-0.9 confidence\n- `generateOpportunities()` — return 1-2 mock Opportunity objects\n- `summarize()` — return a mock summary paragraph\n\n## Testing Strategy\n\nUse vitest for all tests. Tests should be runnable without external services (mock DB and Redis).\n\n**API tests:**\n- Test each route returns correct status codes and response shapes\n- Test auth middleware rejects requests without Authorization header\n- Test error handler formats errors correctly\n- Use Hono's built-in test client (`app.request()`)\n\n**Worker tests:**\n- Test job handler processes a mock job and calls agents\n- Mock the DB and agent calls\n\n**Agent tests:**\n- Test each agent implements the full interface\n- Test registry contains all 5 agents\n- Test each method returns data matching expected types\n\n## IMPORTANT Notes\n\n- Do NOT modify `.github/workflows/`\n- Import types from `@chief-mog/types`, not define your own\n- Use the logger from `@chief-mog/lib` — do NOT use console.log\n- Use `@chief-mog/config` for env vars — do NOT use process.env directly\n- Make sure all stub routes return valid JSON matching the Zod schemas\n- BullMQ requires Redis — the worker should gracefully handle Redis being unavailable (log warning, retry)\n- Use `type: \"module\"` in all package.json files",
+      "checklist": [
+        {
+          "id": "b1",
+          "description": "Hono API server boots and serves health endpoint",
+          "steps": [
+            "Create apps/api/package.json with hono, @hono/node-server, @hono/zod-validator dependencies",
+            "Create apps/api/tsconfig.json extending base",
+            "Implement apps/api/src/index.ts entry point that creates server and listens on API_PORT",
+            "Implement apps/api/src/app.ts with Hono app and middleware",
+            "Implement GET /health route returning status, timestamp, version",
+            "Start the server with tsx and verify /health responds"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b2",
+          "description": "API middleware: auth placeholder, error handler, request logger, CORS",
+          "steps": [
+            "Implement auth middleware that checks Authorization header on /api/* routes",
+            "Implement error handler middleware that catches AppError and returns JSON",
+            "Implement request logger middleware using @chief-mog/lib logger",
+            "Enable CORS for all origins",
+            "Test: request to /api/projects without auth header returns 401",
+            "Test: request to /health works without auth"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b3",
+          "description": "Project CRUD routes: list, create, get by ID",
+          "steps": [
+            "Implement GET /api/projects — query DB or return mock data",
+            "Implement POST /api/projects — validate with InsertProjectSchema, insert or mock, return 201",
+            "Implement GET /api/projects/:id — fetch by ID from DB or mock",
+            "Test each route returns correct status codes and response shape",
+            "Test POST validation rejects invalid input with 400"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b4",
+          "description": "Analysis trigger and opportunity list routes",
+          "steps": [
+            "Implement POST /api/projects/:id/analyze — enqueue BullMQ job, return jobId and status",
+            "Implement GET /api/projects/:id/opportunities — query DB or return mock data",
+            "Create apps/api/src/lib/queue.ts with BullMQ queue connection",
+            "Test analyze endpoint returns queued status",
+            "Test opportunities endpoint returns array of opportunities"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b5",
+          "description": "Agent interface and 5 stub agents with registry",
+          "steps": [
+            "Create packages/agents/package.json with @chief-mog/types dependency",
+            "Define Agent interface with ingest/analyze/generateOpportunities/summarize in packages/agents/src/interface.ts",
+            "Define AgentContext, IngestResult, AnalysisResult types",
+            "Implement agent registry (Map-based) with register/get/getAll functions",
+            "Implement SearchMogAgent stub with mock returns for all 4 methods",
+            "Implement GeoAgent stub",
+            "Implement RedditMogAgent stub",
+            "Implement CompetitorIntelAgent stub",
+            "Implement ContentFoundryAgent stub",
+            "Register all 5 agents in the registry on module load",
+            "Test: registry contains 5 agents, each returns valid mock data"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b6",
+          "description": "BullMQ worker processes analysis jobs",
+          "steps": [
+            "Create apps/worker/package.json with bullmq, ioredis dependencies",
+            "Create apps/worker/tsconfig.json extending base",
+            "Implement Redis connection in apps/worker/src/lib/redis.ts",
+            "Implement analysis worker that processes jobs with { projectId, agentId? }",
+            "Worker creates AgentRun record, runs agent methods, updates record",
+            "Implement scheduled worker with daily cron job (6:00 UTC)",
+            "Implement graceful shutdown on SIGTERM/SIGINT",
+            "Implement apps/worker/src/index.ts entry point that starts all workers",
+            "Test: mock job is processed and AgentRun record is created"
+          ],
+          "passes": false
+        },
+        {
+          "id": "b7",
+          "description": "All backend tests pass",
+          "steps": [
+            "Run vitest for apps/api and verify all route tests pass",
+            "Run vitest for apps/worker and verify worker tests pass",
+            "Run vitest for packages/agents and verify agent tests pass",
+            "Run turbo typecheck for all backend packages",
+            "Run turbo lint for all backend packages"
+          ],
+          "passes": false
+        }
+      ],
+      "quality_checklist": [
+        {
+          "id": "bq1",
+          "description": "All routes use types from @chief-mog/types — no inline type definitions",
+          "steps": ["Grep for inline type/interface definitions in apps/api/src/routes/", "Verify all request/response types reference shared schemas"],
+          "passes": false
+        },
+        {
+          "id": "bq2",
+          "description": "Error handling is consistent — all routes use AppError subclasses, not raw Error throws",
+          "steps": ["Check all error paths use NotFoundError, ValidationError, etc.", "Verify error middleware catches and formats all error types"],
+          "passes": false
+        },
+        {
+          "id": "bq3",
+          "description": "No console.log — all logging uses @chief-mog/lib logger",
+          "steps": ["Grep for console.log in apps/api, apps/worker, packages/agents", "Verify logger is imported and used consistently"],
+          "passes": false
+        },
+        {
+          "id": "bq4",
+          "description": "Worker handles failures gracefully — agent errors don't crash the worker",
+          "steps": ["Check agent execution is wrapped in try/catch", "Verify AgentRun status is set to 'failed' on error with error message saved"],
+          "passes": false
+        }
+      ]
+    },
+    {
+      "id": "frontend",
+      "title": "Frontend application with React, Vite, and page shells",
+      "description": "Build the React SPA with Vite, React Router, Tailwind CSS, and shadcn/ui. Implement the app shell with sidebar navigation, design tokens for the 'Command Dark' theme, and page shells for Command Center, Project Creation, and Opportunity List. Create a shared UI package with base components.",
+      "acceptance_criteria": "1. Vite dev server starts and renders the app\n2. React Router navigates between 3 pages without reload\n3. Command Center page shell renders with layout and sidebar\n4. Project Creation page shell renders with a form placeholder\n5. Opportunity List page shell renders with a table/list placeholder\n6. 'Command Dark' design theme is applied (dark background, accent colors, proper typography)\n7. packages/ui exports shared components used by the app\n8. API client stub exists for future backend integration\n9. TypeScript compiles without errors\n10. Build produces a working production bundle",
+      "claudeMd": "# Frontend Task Context\n\nYou are building the React frontend for \"Chief MOG Officer\" — an AI-powered competitive intelligence platform.\n\n## Design Direction: \"Command Dark\"\n\nThis is a dark-mode-first design with an operations/intelligence aesthetic. Think Bloomberg terminal meets modern SaaS dashboard. NOT generic white SaaS.\n\n### Typography\n- **Display/headings**: JetBrains Mono (import from Google Fonts) — gives a technical, data-oriented feel\n- **Body text**: Inter (already in Tailwind defaults, but explicitly set) — clean and readable\n- **Monospace data**: JetBrains Mono for numbers, IDs, status codes, data tables\n\n### Color Palette\n```css\n/* Backgrounds */\n--bg-primary: #0D1117;       /* Main background - deep charcoal */\n--bg-secondary: #161B22;     /* Card/panel background - dark slate */\n--bg-tertiary: #21262D;      /* Elevated elements, hover states */\n--bg-input: #0D1117;         /* Input backgrounds */\n\n/* Borders */\n--border-default: #30363D;   /* Default borders */\n--border-muted: #21262D;     /* Subtle borders */\n\n/* Text */\n--text-primary: #E6EDF3;     /* Primary text - off-white */\n--text-secondary: #8B949E;   /* Secondary text - muted */\n--text-tertiary: #6E7681;    /* Tertiary text - very muted */\n\n/* Accents */\n--accent-green: #39D353;     /* Primary action, success, positive metrics */\n--accent-blue: #58A6FF;      /* Links, secondary actions, info */\n--accent-amber: #E3B341;     /* Warnings, attention, pending states */\n--accent-red: #F85149;       /* Errors, destructive actions, negative metrics */\n--accent-purple: #BC8CFF;    /* Agent/AI-related indicators */\n```\n\n### Layout Principles\n- **Sidebar navigation**: Fixed left sidebar (240px) with icon + label nav items, dark bg\n- **Dense layout**: Minimize whitespace — this is a professional tool, not a marketing site\n- **Grid-based**: Content area uses CSS Grid for dashboard layouts\n- **Sharp corners**: max rounded-sm (2px) — NO large border-radius\n- **High contrast borders**: Visible but not heavy borders between sections\n- **Status indicators**: Small colored dots/badges for status (green=active, amber=pending, red=failed)\n\n### Component Style\n- Cards: bg-secondary, border border-default, rounded-sm, no shadow\n- Buttons: Filled (bg-accent-green, text-bg-primary) for primary, ghost/outline for secondary\n- Tables: Compact rows, alternating row bg (bg-primary/bg-secondary), monospace data columns\n- Inputs: bg-input, border border-default, text-primary, focus ring accent-blue\n\n## Libraries & Versions\n\n- `react@19.2.4` + `react-dom@19.2.4`\n- `react-router@7.13.2` — routing (use the latest v7 API with createBrowserRouter or <Routes>)\n- `vite@8.0.2` — bundler\n- `tailwindcss@4.2.2` — utility CSS (Tailwind v4 uses CSS-based config, not tailwind.config.js)\n- `@biomejs/biome@2.4.8` — linting (not ESLint)\n- `vitest@4.1.1` — testing\n- `lucide-react` — icons (clean, consistent icon set)\n\n**shadcn/ui**: Use the `npx shadcn@latest init` CLI to bootstrap, then add components with `npx shadcn@latest add button card input table`. Customize the theme to match Command Dark colors. shadcn/ui v2 works with Tailwind v4.\n\n## Monorepo Integration\n\n- Import types from `@chief-mog/types` (Zod schemas + TS types)\n- This app is `@chief-mog/web` in the workspace\n- packages/ui contains shared components — but for this scaffolding, you can put shadcn components directly in apps/web and we'll extract later if needed\n\n## App Structure\n\n```\napps/web/\n├── index.html\n├── package.json\n├── tsconfig.json\n├── tsconfig.app.json\n├── vite.config.ts\n├── src/\n│   ├── main.tsx              # React entry point\n│   ├── app.tsx               # Router setup\n│   ├── index.css             # Tailwind imports + custom properties + font imports\n│   ├── components/\n│   │   ├── layout/\n│   │   │   ├── root-layout.tsx    # Main layout with sidebar + content area\n│   │   │   ├── sidebar.tsx        # Navigation sidebar\n│   │   │   └── header.tsx         # Optional top bar within content area\n│   │   ├── ui/                    # shadcn/ui components (button, card, input, table, badge, etc.)\n│   │   └── shared/                # App-specific shared components\n│   │       ├── status-badge.tsx   # Colored status indicator\n│   │       ├── page-header.tsx    # Consistent page title + actions area\n│   │       └── empty-state.tsx    # Empty state placeholder\n│   ├── pages/\n│   │   ├── command-center.tsx     # Dashboard / home page\n│   │   ├── project-create.tsx     # New project form page\n│   │   ├── project-detail.tsx     # Single project view (optional, stretch)\n│   │   └── opportunities.tsx      # Opportunity list page\n│   ├── lib/\n│   │   ├── api-client.ts          # Fetch wrapper for backend API calls\n│   │   └── utils.ts               # cn() utility for class merging\n│   └── hooks/\n│       └── use-api.ts             # Generic data fetching hook (stub)\n```\n\n## Page Shells\n\nThese are **shells** — visual structure with placeholder content, not full implementations.\n\n### Command Center (Dashboard)\n- Page title: \"Command Center\" with subtitle showing project name\n- Stats row: 4 metric cards (Opportunities, Active Campaigns, Agent Runs Today, Health Score) — all showing mock numbers\n- Recent activity section: placeholder list of recent agent runs with status indicators\n- Quick actions: buttons for \"Run Analysis\", \"View Opportunities\", \"Create Project\"\n\n### Project Creation\n- Page title: \"New Project\"\n- Form with fields: Project Name (text), Description (textarea), Company Name, Industry (select), Website URL\n- Keywords input (tag-style, but can be simple comma-separated for now)\n- Submit button (non-functional, just shows the form)\n- Form should use shadcn/ui form components\n\n### Opportunity List\n- Page title: \"Opportunities\" with filter controls placeholder\n- Table with columns: Title, Agent, Type, Score, Status, Date\n- 5 mock rows of opportunity data\n- Status badges with color coding (green=new, blue=reviewed, amber=acted, grey=dismissed)\n- Score displayed as a progress-style indicator or colored number\n\n## Sidebar Navigation\n\nItems:\n- Command Center (icon: LayoutDashboard) — path: /\n- Projects (icon: FolderOpen) — path: /projects (can point to command center for now)\n- Opportunities (icon: Lightbulb) — path: /opportunities\n- Agents (icon: Bot) — path: /agents (placeholder page or disabled)\n- Settings (icon: Settings) — path: /settings (placeholder page or disabled)\n\nSidebar footer: app name \"Chief MOG Officer\" in small text with version \"v0.1.0\"\n\n## packages/ui (Shared UI Package)\n\nMinimal setup — just enough to prove the package works:\n- package.json with react, tailwindcss as peer dependencies\n- Export a few base components that apps/web uses (or just re-export types)\n- For now, most UI lives in apps/web directly — we'll extract to packages/ui in a future task\n\n## API Client Stub\n\n```typescript\n// apps/web/src/lib/api-client.ts\nconst API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';\n\nexport const api = {\n  async getProjects() { /* fetch GET /api/projects */ },\n  async createProject(data: InsertProject) { /* fetch POST /api/projects */ },\n  async getOpportunities(projectId: string) { /* fetch GET /api/projects/:id/opportunities */ },\n  async triggerAnalysis(projectId: string) { /* fetch POST /api/projects/:id/analyze */ },\n};\n```\n\nFor now, methods can return mock data (same shape as what the API would return) so the UI renders without a running backend.\n\n## Testing\n\n- Basic render tests for each page component\n- Test that router renders correct page for each path\n- Use vitest + @testing-library/react\n\n## Build\n\n- `vite build` should produce a working production bundle in `dist/`\n- `vite preview` should serve it\n\n## IMPORTANT Notes\n\n- Do NOT modify `.github/workflows/`\n- Tailwind v4 uses CSS-based configuration, NOT tailwind.config.js — configuration goes in the CSS file with `@theme` directive\n- React Router v7 — use `<BrowserRouter>`, `<Routes>`, `<Route>` from `react-router`\n- Import fonts from Google Fonts CDN in index.html (JetBrains Mono, Inter)\n- Use `type: \"module\"` in package.json\n- The VITE_API_URL env var should be optional — default to localhost:3001\n- Make sure the Vite config has proper proxy or CORS handling for API calls in dev",
+      "checklist": [
+        {
+          "id": "w1",
+          "description": "Vite + React app bootstrapped with proper config",
+          "steps": [
+            "Create apps/web/package.json with react, react-dom, react-router, vite, tailwindcss, lucide-react",
+            "Create apps/web/vite.config.ts with React plugin and dev server proxy for /api",
+            "Create apps/web/tsconfig.json and tsconfig.app.json",
+            "Create apps/web/index.html with JetBrains Mono and Inter font imports",
+            "Create apps/web/src/main.tsx entry point rendering App",
+            "Verify vite dev server starts without errors"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w2",
+          "description": "Tailwind v4 configured with Command Dark theme and design tokens",
+          "steps": [
+            "Create apps/web/src/index.css with Tailwind imports and @theme directive",
+            "Define all color tokens (bg-primary through accent-purple) as CSS custom properties",
+            "Configure font families (JetBrains Mono display, Inter body)",
+            "Set base styles: dark background, light text, sharp corners default",
+            "Verify Tailwind classes render correctly in browser"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w3",
+          "description": "shadcn/ui initialized with Command Dark customization",
+          "steps": [
+            "Run shadcn init or manually set up components.json",
+            "Add core components: button, card, input, table, badge, select, textarea, label",
+            "Customize component styles to match Command Dark palette",
+            "Verify components render with dark theme"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w4",
+          "description": "App shell with sidebar navigation and root layout",
+          "steps": [
+            "Create root-layout.tsx with fixed sidebar (240px) + scrollable content area",
+            "Create sidebar.tsx with navigation items (Command Center, Projects, Opportunities, Agents, Settings)",
+            "Use lucide-react icons for each nav item",
+            "Add app name and version in sidebar footer",
+            "Highlight active route in sidebar",
+            "Verify layout renders correctly at various viewport sizes"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w5",
+          "description": "React Router configured with all page routes",
+          "steps": [
+            "Create apps/web/src/app.tsx with BrowserRouter and Routes",
+            "Add route: / → CommandCenter page",
+            "Add route: /projects/new → ProjectCreate page",
+            "Add route: /opportunities → Opportunities page",
+            "Verify navigation between pages works without full reload"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w6",
+          "description": "Command Center page shell with mock dashboard content",
+          "steps": [
+            "Create pages/command-center.tsx with page header",
+            "Add 4 metric cards in a grid (Opportunities, Active Campaigns, Agent Runs Today, Health Score) with mock numbers",
+            "Add recent activity section with placeholder agent run entries and status indicators",
+            "Add quick action buttons (Run Analysis, View Opportunities, Create Project)",
+            "Apply Command Dark styling consistently"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w7",
+          "description": "Project Creation page shell with form",
+          "steps": [
+            "Create pages/project-create.tsx with page header",
+            "Add form fields: Project Name, Description, Company Name, Industry (select), Website URL, Keywords",
+            "Use shadcn/ui form components (Input, Textarea, Select, Button)",
+            "Submit button shows toast or alert (non-functional placeholder)",
+            "Form validates required fields client-side"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w8",
+          "description": "Opportunity List page shell with mock data table",
+          "steps": [
+            "Create pages/opportunities.tsx with page header and filter placeholder",
+            "Create table with columns: Title, Agent, Type, Score, Status, Date",
+            "Populate with 5 mock opportunity rows",
+            "Status column uses colored badges (green=new, blue=reviewed, amber=acted, grey=dismissed)",
+            "Score column shows visual indicator or colored number"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w9",
+          "description": "API client stub and shared components",
+          "steps": [
+            "Create apps/web/src/lib/api-client.ts with typed methods returning mock data",
+            "Create shared components: status-badge, page-header, empty-state",
+            "Create packages/ui/package.json as minimal placeholder",
+            "Verify imports from @chief-mog/types work in the frontend"
+          ],
+          "passes": false
+        },
+        {
+          "id": "w10",
+          "description": "Build succeeds and all frontend tests pass",
+          "steps": [
+            "Run vite build and verify dist/ output is produced",
+            "Write basic render tests for each page component",
+            "Write router test verifying correct page renders for each path",
+            "Run vitest and verify all tests pass",
+            "Run typecheck and verify no TypeScript errors",
+            "Run biome lint and verify no lint errors"
+          ],
+          "passes": false
+        }
+      ],
+      "quality_checklist": [
+        {
+          "id": "wq1",
+          "description": "Design is consistently 'Command Dark' — no default white backgrounds, no generic rounded components",
+          "steps": ["Visually inspect all pages for white backgrounds or generic styling", "Verify all cards use bg-secondary with border-default borders", "Check that accent colors are used intentionally, not decoratively"],
+          "passes": false
+        },
+        {
+          "id": "wq2",
+          "description": "No hardcoded strings in components — mock data is centralized",
+          "steps": ["Check that mock data is defined in api-client or a constants file, not inline in JSX", "Verify types from @chief-mog/types are used for mock data shape"],
+          "passes": false
+        },
+        {
+          "id": "wq3",
+          "description": "Responsive layout works at standard breakpoints",
+          "steps": ["Check sidebar collapses or hides on mobile widths", "Verify grid layouts stack appropriately on narrow screens"],
+          "passes": false
+        },
+        {
+          "id": "wq4",
+          "description": "No unused imports, components, or CSS",
+          "steps": ["Run biome lint to catch unused imports", "Check for defined-but-unused components or functions"],
+          "passes": false
+        }
+      ]
+    }
+  ],
+  "integration": {
+    "title": "Integrate all modules into working monorepo",
+    "description": "Merge the foundation, backend, and frontend branches. Resolve any conflicts in shared package definitions, ensure all cross-package imports work, verify the full dev workflow (docker compose up, db migrate, db seed, turbo dev starts all 3 apps), and confirm all tests/lints/typechecks pass.",
+    "claudeMd": "# Integration Context\n\nYou are merging 3 task branches into a cohesive monorepo. The foundation task created the shared packages, the backend task created API + worker + agents, and the frontend task created the React app.\n\n## Likely Conflict Areas\n\n1. **Placeholder files**: Foundation created placeholder package.json/tsconfig/index.ts for apps/api, apps/worker, packages/agents, packages/ui. Backend and frontend tasks created real implementations. Prefer the real implementations.\n2. **Root package.json**: Foundation created root scripts. Backend/frontend may have added dependencies. Merge all.\n3. **Shared package types**: If backend or frontend modified @chief-mog/types, reconcile changes.\n\n## Verification Steps\n\n1. `npm install` — all workspaces resolve\n2. `docker compose up -d` — PostgreSQL and Redis start\n3. `turbo build` — all packages compile\n4. `turbo typecheck` — no type errors\n5. `turbo lint` — no lint errors\n6. `npm run db:migrate` — creates tables\n7. `npm run db:seed` — seeds demo data\n8. `turbo dev` — starts web (3000), api (3001), worker simultaneously\n9. `curl localhost:3001/health` — returns ok\n10. `curl -H 'Authorization: Bearer test' localhost:3001/api/projects` — returns project list including seeded project\n11. Open localhost:3000 — Command Center renders with sidebar\n12. Navigate to /opportunities — table renders\n13. Navigate to /projects/new — form renders\n14. `turbo test` — all tests pass\n15. `docker build .` — Dockerfile builds successfully\n\n## Fix Strategy\n\n- For merge conflicts: prefer the more complete implementation\n- For missing cross-references: add them (e.g., if frontend references a type that backend also uses, ensure the shared type is correct)\n- For broken imports: check package.json exports fields and tsconfig paths\n- For test failures: fix the tests, not the implementations (unless the implementation is clearly wrong)\n\n## IMPORTANT\n- Do NOT modify `.github/workflows/`\n- After integration, all 11 acceptance criteria from the original task should be met"
+  },
+  "verification": {
+    "buildCommand": "npm run build",
+    "runCommand": "npm run dev",
+    "readySignal": "listening|ready|started|VITE",
+    "appType": "web",
+    "port": 3000,
+    "checks": [
+      {
+        "id": "v1",
+        "description": "API health endpoint responds",
+        "steps": ["Wait for API to start on port 3001", "Run: curl -s http://localhost:3001/health", "Verify response contains { status: 'ok' }"],
+        "passes": false
+      },
+      {
+        "id": "v2",
+        "description": "API project endpoints work with auth",
+        "steps": [
+          "Run: curl -s -H 'Authorization: Bearer test' http://localhost:3001/api/projects",
+          "Verify response is a JSON array",
+          "Run: curl -s -X POST -H 'Authorization: Bearer test' -H 'Content-Type: application/json' -d '{\"name\":\"Test\",\"description\":\"Test project\"}' http://localhost:3001/api/projects",
+          "Verify response contains created project with 201 status"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v3",
+        "description": "Frontend renders all 3 page shells",
+        "steps": [
+          "Open http://localhost:3000 in browser",
+          "Verify Command Center page renders with sidebar navigation",
+          "Navigate to /projects/new — verify form renders",
+          "Navigate to /opportunities — verify table renders with mock data"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v4",
+        "description": "Database migration and seed work",
+        "steps": [
+          "Run: docker compose up -d",
+          "Run: npm run db:migrate",
+          "Run: npm run db:seed",
+          "Run: curl -s -H 'Authorization: Bearer test' http://localhost:3001/api/projects",
+          "Verify seeded demo project appears in response"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v5",
+        "description": "Worker boots and connects to Redis",
+        "steps": [
+          "Check worker process is running (from turbo dev output)",
+          "Verify worker logs show Redis connection",
+          "Run: curl -s -X POST -H 'Authorization: Bearer test' http://localhost:3001/api/projects/demo-project-id/analyze",
+          "Verify response contains jobId and status: queued"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v6",
+        "description": "All tests, typechecks, and lints pass",
+        "steps": [
+          "Run: npm run test",
+          "Verify all test suites pass",
+          "Run: npm run typecheck",
+          "Verify no type errors",
+          "Run: npm run lint",
+          "Verify no lint errors"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v7",
+        "description": "Dockerfile builds successfully",
+        "steps": [
+          "Run: docker build .",
+          "Verify build completes without errors"
+        ],
+        "passes": false
+      },
+      {
+        "id": "v8",
+        "description": "Architecture docs are present and readable",
+        "steps": [
+          "Verify docs/architecture.md exists and has content",
+          "Verify docs/domain-model.md exists and has content",
+          "Verify docs/agent-interface.md exists and has content",
+          "Verify docs/dev-setup.md exists and has content with setup instructions"
+        ],
+        "passes": false
+      }
+    ]
+  }
+}
