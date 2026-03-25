@@ -21,19 +21,11 @@ function isProduction(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-function formatJson(
-  level: LogLevel,
-  message: string,
-  context: Record<string, unknown>,
-): string {
+function formatJson(level: LogLevel, message: string, context: Record<string, unknown>): string {
   return JSON.stringify({ level, message, timestamp: new Date().toISOString(), ...context });
 }
 
-function formatPretty(
-  level: LogLevel,
-  message: string,
-  context: Record<string, unknown>,
-): string {
+function formatPretty(level: LogLevel, message: string, context: Record<string, unknown>): string {
   const timestamp = new Date().toISOString();
   const tag = level.toUpperCase().padEnd(5);
   const ctxStr = Object.keys(context).length > 0 ? ` ${JSON.stringify(context)}` : "";

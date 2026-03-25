@@ -1,6 +1,7 @@
 {
   "name": "chief-mog-officer",
   "private": true,
+  "packageManager": "npm@10.9.4",
   "type": "module",
   "workspaces": [
     "apps/*",

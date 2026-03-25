@@ -14,10 +14,7 @@ export interface RetryOptions {
   backoff?: boolean;
 }
 
-export async function retry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {},
-): Promise<T> {
+export async function retry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const { attempts = 3, delayMs = 1000, backoff = true } = options;
   let lastError: unknown;
   for (let i = 0; i < attempts; i++) {
