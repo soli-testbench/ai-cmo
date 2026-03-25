@@ -125,15 +125,14 @@ describe("Projects", () => {
 });
 
 describe("Analysis", () => {
-	it("POST /api/projects/:id/analyze returns queued status", async () => {
+	it("POST /api/projects/:id/analyze returns 503 when queue is unavailable", async () => {
 		const res = await app.request("/api/projects/00000000-0000-0000-0000-000000000001/analyze", {
 			method: "POST",
 			headers: authHeader(),
 		});
-		expect(res.status).toBe(200);
+		expect(res.status).toBe(503);
 		const body = await res.json();
-		expect(body.status).toBe("queued");
-		expect(body.jobId).toBeTruthy();
+		expect(body.error).toBe("Failed to enqueue analysis job");
 	});
 });
 

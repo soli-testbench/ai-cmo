@@ -1,11 +1,10 @@
-import { generateId, logger } from "@chief-mog/lib";
+import { logger } from "@chief-mog/lib";
 import { Hono } from "hono";
 
 export const analysisRoutes = new Hono();
 
 analysisRoutes.post("/projects/:id/analyze", async (c) => {
   const projectId = c.req.param("id");
-  let jobId: string;
 
   try {
     const { getAnalysisQueue } = await import("../lib/queue.js");
@@ -14,11 +13,9 @@ analysisRoutes.post("/projects/:id/analyze", async (c) => {
       setTimeout(() => reject(new Error("Queue timeout")), 2000),
     );
     const job = await Promise.race([queue.add("analyze", { projectId }), timeout]);
-    jobId = job.id ?? generateId();
-  } catch {
-    logger.warn("Redis unavailable, generating mock job ID");
-    jobId = generateId();
+    return c.json({ jobId: job.id, status: "queued", projectId });
+  } catch (err) {
+    logger.error("Failed to enqueue analysis job", { projectId, error: String(err) });
+    return c.json({ error: "Failed to enqueue analysis job", projectId }, 503);
   }
-
-  return c.json({ jobId, status: "queued", projectId });
 });

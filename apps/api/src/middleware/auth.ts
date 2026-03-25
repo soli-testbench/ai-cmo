@@ -82,7 +82,10 @@ function getJwtSecret(): string {
 	throw new Error("JWT_SECRET environment variable is required in non-development environments");
 }
 
-/** Exposed for test use only — returns the active JWT secret. */
+/** Returns the active JWT secret. Only available in test environments. */
 export function getActiveJwtSecret(): string {
+	if (process.env.NODE_ENV !== "test") {
+		throw new Error("getActiveJwtSecret() is only available in test environments");
+	}
 	return getJwtSecret();
 }
