@@ -1,0 +1,21 @@
+{
+  "name": "@chief-mog/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'worker placeholder'",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/"
+  },
+  "dependencies": {
+    "@chief-mog/types": "*",
+    "@chief-mog/config": "*",
+    "@chief-mog/lib": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.8",
+    "typescript": "~5.7.0"
+  }
+}
