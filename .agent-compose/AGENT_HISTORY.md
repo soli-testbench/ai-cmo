@@ -1,3 +1,11 @@
+## security-fixer — 2026-03-25T01:58:00Z
+
+- **Feedback**: Second security review rejected prior fix as insufficient — auth still accepts arbitrary bearer tokens (no JWT verification), no rate limiting implemented, CORS still wildcard-capable in production, default DB creds not blocked in production, .tsbuildinfo artifacts committed, .agent-compose operational files polluting branch.
+- **Actions taken**: Replaced placeholder bearer check with real JWT verification (HS256 via hono/jwt) including signature, expiry, issuer, and audience validation; added in-memory rate limiting middleware (100 req/min/IP) with X-RateLimit-* headers; restricted CORS to reject wildcard in production NODE_ENV; added superRefine env validation rejecting default DB credentials in production; added 4 new security tests (arbitrary tokens, expired tokens, wrong-secret tokens, valid tokens); removed committed .tsbuildinfo files; removed .agent-compose operational artifacts (PLAN.md, current) and added .gitignore rules; updated .env.example with JWT config docs.
+- **Files changed**: apps/api/src/middleware/auth.ts, apps/api/src/middleware/rate-limit.ts (new), apps/api/src/app.ts, apps/api/__tests__/api.test.ts, packages/config/src/index.ts, .env.example, .gitignore, apps/web/tsconfig.app.tsbuildinfo (deleted), packages/types/tsconfig.tsbuildinfo (deleted), packages/ui/tsconfig.tsbuildinfo (deleted), .agent-compose/20260325T002635Z/PLAN.md (deleted), .agent-compose/current (deleted)
+- **Tests run**: yes — 89 tests passing (config: 5, types: 15, lib: 13, agents: 27, web: 12, api: 13, worker: 4)
+- **Outcome**: success
+
 ## security-fixer — 2026-03-25T01:39:00Z
 
 - **Feedback**: Security review flagged out-of-scope operational artifacts, placeholder auth allowing any token, hardcoded bearer token in frontend, unrestricted CORS, missing rate limiting, and default docker credentials.
