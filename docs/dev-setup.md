@@ -209,7 +209,7 @@ The `docker-compose.yml` ships with default Postgres credentials (`postgres:post
 
 ### Frontend auth
 
-The web frontend authenticates via **httpOnly session cookies** set by the backend. No bearer tokens or API keys are embedded in the frontend build. The `credentials: "include"` fetch option ensures cookies are sent with every API request.
+The web frontend authenticates by sending a JWT **Bearer token** in the `Authorization` header on every API request. Tokens are obtained from the backend auth flow and stored client-side. The API validates the token signature (HS256), expiry (`exp` claim), and optional `iss`/`aud` claims on each request.
 
 ### Deployment checklist
 

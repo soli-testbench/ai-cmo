@@ -39,8 +39,11 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 		throw new UnauthorizedError("Token verification failed");
 	}
 
-	// Validate expiry
-	if (typeof payload.exp === "number" && payload.exp < Math.floor(Date.now() / 1000)) {
+	// Require and validate expiry — tokens without exp are rejected
+	if (typeof payload.exp !== "number") {
+		throw new UnauthorizedError("Token must include an expiration (exp) claim");
+	}
+	if (payload.exp < Math.floor(Date.now() / 1000)) {
 		throw new UnauthorizedError("Token has expired");
 	}
 

@@ -1,5 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 
+// Mock @chief-mog/db
+const mockInsert = vi.fn().mockReturnValue({
+  values: vi.fn().mockReturnValue({
+    returning: vi.fn().mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000000" }]),
+  }),
+});
+const mockUpdate = vi.fn().mockReturnValue({
+  set: vi.fn().mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
+  }),
+});
+vi.mock("@chief-mog/db", () => ({
+  db: {
+    insert: mockInsert,
+    update: mockUpdate,
+  },
+  agentRuns: { id: "id" },
+}));
+
+// Mock drizzle-orm
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn(),
+}));
+
 // Mock @chief-mog/lib
 vi.mock("@chief-mog/lib", () => ({
   generateId: () => "00000000-0000-0000-0000-000000000000",

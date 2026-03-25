@@ -56,6 +56,21 @@ describe("Auth", () => {
 		expect(res.status).toBe(401);
 	});
 
+	it("rejects tokens without exp claim", async () => {
+		const secret = getActiveJwtSecret();
+		const noExpToken = await sign(
+			{ sub: "test-user", iat: Math.floor(Date.now() / 1000) },
+			secret,
+			"HS256",
+		);
+		const res = await app.request("/api/projects", {
+			headers: { Authorization: `Bearer ${noExpToken}` },
+		});
+		expect(res.status).toBe(401);
+		const body = await res.json();
+		expect(body.error.message).toContain("exp");
+	});
+
 	it("rejects tokens signed with wrong secret", async () => {
 		const badToken = await sign(
 			{ sub: "test-user", exp: Math.floor(Date.now() / 1000) + 3600 },
